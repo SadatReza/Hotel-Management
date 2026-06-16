@@ -1,0 +1,3154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Aurelia Grand — Hotel Management System</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet"/>
+<script>
+tailwind.config={theme:{extend:{colors:{
+  gold:{DEFAULT:'#D4A853',light:'#F0C97A',dark:'#A07830'},
+  ink:{DEFAULT:'#0D1117',2:'#161B22',3:'#21262D',4:'#30363D'},
+  slate:{DEFAULT:'#8B949E',light:'#C9D1D9'},
+  emerald:{DEFAULT:'#238636'},
+  ruby:{DEFAULT:'#DA3633'},
+  sapphire:{DEFAULT:'#1F6FEB'},
+  amber:{DEFAULT:'#D29922'},
+},fontFamily:{sans:['Outfit','sans-serif'],serif:['Playfair Display','serif']}}}}
+</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'Outfit',sans-serif;background:#0D1117;color:#C9D1D9;overflow:hidden}
+:root{--gold:#D4A853;--ink:#0D1117;--ink2:#161B22;--ink3:#21262D;--ink4:#30363D;--slate:#8B949E;--light:#C9D1D9}
+
+/* SCROLLBARS */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:#161B22}
+::-webkit-scrollbar-thumb{background:#30363D;border-radius:2px}
+::-webkit-scrollbar-thumb:hover{background:#D4A853}
+
+/* SIDEBAR */
+.sidebar{width:240px;min-width:240px;background:#161B22;border-right:1px solid #21262D;display:flex;flex-direction:column;overflow:hidden;transition:width 0.3s}
+.sidebar.collapsed{width:64px;min-width:64px}
+.sidebar-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:6px;cursor:pointer;transition:all 0.2s;color:#8B949E;font-size:0.83rem;white-space:nowrap;text-decoration:none;border:1px solid transparent}
+.sidebar-item:hover{background:#21262D;color:#C9D1D9}
+.sidebar-item.active{background:rgba(212,168,83,0.12);color:#D4A853;border-color:rgba(212,168,83,0.25)}
+.sidebar-item .icon{font-size:1rem;flex-shrink:0;width:20px;text-align:center}
+.sidebar-label{overflow:hidden;transition:opacity 0.2s,width 0.3s}
+.sidebar.collapsed .sidebar-label{opacity:0;width:0}
+
+/* ROLE BADGE */
+.role-badge{font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;padding:2px 8px;border-radius:99px;font-weight:600}
+.role-admin{background:rgba(218,54,51,0.15);color:#F85149;border:1px solid rgba(218,54,51,0.3)}
+.role-staff{background:rgba(31,111,235,0.15);color:#58A6FF;border:1px solid rgba(31,111,235,0.3)}
+.role-guest{background:rgba(35,134,54,0.15);color:#3FB950;border:1px solid rgba(35,134,54,0.3)}
+.role-visitor{background:rgba(212,168,83,0.15);color:#D4A853;border:1px solid rgba(212,168,83,0.3)}
+
+/* CARDS */
+.card{background:#161B22;border:1px solid #21262D;border-radius:8px;transition:border-color 0.2s,box-shadow 0.2s}
+.card:hover{border-color:#30363D}
+.card-hover:hover{border-color:rgba(212,168,83,0.3);box-shadow:0 4px 24px rgba(0,0,0,0.4)}
+
+/* STAT CARD */
+.stat-card{background:#161B22;border:1px solid #21262D;border-radius:8px;padding:1.25rem;transition:border-color 0.2s}
+.stat-card:hover{border-color:#30363D}
+.stat-num{font-family:'Playfair Display',serif;font-size:2rem;color:#C9D1D9;line-height:1}
+.stat-label{font-size:0.72rem;color:#8B949E;text-transform:uppercase;letter-spacing:0.08em;margin-top:4px}
+.stat-trend{font-size:0.72rem;margin-top:6px}
+.trend-up{color:#3FB950}.trend-down{color:#F85149}
+
+/* GOLD ACCENT */
+.gold-dot{width:8px;height:8px;border-radius:50%;background:#D4A853;flex-shrink:0}
+.gold-bar{height:2px;background:linear-gradient(to right,#D4A853,#F0C97A);border-radius:1px}
+.gold-line-left{border-left:3px solid #D4A853;padding-left:12px}
+
+/* INPUTS */
+.inp{background:#21262D;border:1px solid #30363D;color:#C9D1D9;border-radius:6px;padding:8px 12px;font-family:'Outfit',sans-serif;font-size:0.85rem;transition:border-color 0.2s,box-shadow 0.2s;width:100%}
+.inp:focus{outline:none;border-color:#D4A853;box-shadow:0 0 0 3px rgba(212,168,83,0.1)}
+.inp option{background:#161B22}
+select.inp{cursor:pointer}
+textarea.inp{resize:none}
+
+/* BUTTONS */
+.btn{border-radius:6px;font-family:'Outfit',sans-serif;font-size:0.8rem;font-weight:500;letter-spacing:0.04em;cursor:pointer;transition:all 0.2s;border:none;display:inline-flex;align-items:center;gap:6px;padding:8px 16px}
+.btn-gold{background:#D4A853;color:#0D1117}.btn-gold:hover{background:#F0C97A;transform:translateY(-1px);box-shadow:0 4px 16px rgba(212,168,83,0.3)}
+.btn-ghost{background:transparent;color:#8B949E;border:1px solid #30363D}.btn-ghost:hover{background:#21262D;color:#C9D1D9}
+.btn-danger{background:rgba(218,54,51,0.15);color:#F85149;border:1px solid rgba(218,54,51,0.2)}.btn-danger:hover{background:rgba(218,54,51,0.25)}
+.btn-success{background:rgba(35,134,54,0.15);color:#3FB950;border:1px solid rgba(35,134,54,0.2)}.btn-success:hover{background:rgba(35,134,54,0.25)}
+.btn-blue{background:rgba(31,111,235,0.15);color:#58A6FF;border:1px solid rgba(31,111,235,0.2)}.btn-blue:hover{background:rgba(31,111,235,0.25)}
+.btn-sm{padding:5px 11px;font-size:0.75rem}
+
+/* STATUS BADGES */
+.badge{font-size:0.65rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;padding:2px 8px;border-radius:99px}
+.badge-green{background:rgba(35,134,54,0.2);color:#3FB950;border:1px solid rgba(35,134,54,0.3)}
+.badge-yellow{background:rgba(212,168,83,0.2);color:#D4A853;border:1px solid rgba(212,168,83,0.3)}
+.badge-red{background:rgba(218,54,51,0.15);color:#F85149;border:1px solid rgba(218,54,51,0.25)}
+.badge-blue{background:rgba(31,111,235,0.15);color:#58A6FF;border:1px solid rgba(31,111,235,0.2)}
+.badge-gray{background:rgba(139,148,158,0.15);color:#8B949E;border:1px solid rgba(139,148,158,0.2)}
+
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse;font-size:0.82rem}
+.tbl th{text-align:left;padding:10px 14px;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.08em;color:#8B949E;border-bottom:1px solid #21262D;font-weight:500}
+.tbl td{padding:11px 14px;border-bottom:1px solid rgba(33,38,45,0.6);color:#C9D1D9;vertical-align:middle}
+.tbl tr:hover td{background:rgba(255,255,255,0.02)}
+.tbl tr:last-child td{border-bottom:none}
+
+/* TABS */
+.tab-bar{display:flex;gap:2px;background:#161B22;border-radius:8px;padding:4px;border:1px solid #21262D}
+.tab-btn{padding:7px 16px;border-radius:6px;font-size:0.78rem;cursor:pointer;transition:all 0.2s;color:#8B949E;border:none;background:transparent;font-family:'Outfit',sans-serif;font-weight:500}
+.tab-btn.active{background:#21262D;color:#C9D1D9}
+.tab-btn:hover:not(.active){color:#C9D1D9}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:999;backdrop-filter:blur(4px);align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:#161B22;border:1px solid #30363D;border-radius:10px;max-width:500px;width:90%;max-height:85vh;overflow-y:auto;animation:slideUp 0.25s ease}
+@keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+/* TOAST */
+.toast-wrap{position:fixed;top:1.5rem;right:1.5rem;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{background:#21262D;border:1px solid #30363D;border-radius:6px;padding:12px 16px;font-size:0.82rem;color:#C9D1D9;pointer-events:all;animation:toastIn 0.3s cubic-bezier(0.34,1.56,0.64,1);box-shadow:0 8px 24px rgba(0,0,0,0.5);display:flex;align-items:center;gap:10px;max-width:320px}
+@keyframes toastIn{from{opacity:0;transform:translateX(100%)}to{opacity:1;transform:translateX(0)}}
+.toast-gold{border-left:3px solid #D4A853}
+.toast-green{border-left:3px solid #3FB950}
+.toast-red{border-left:3px solid #F85149}
+
+/* PROGRESS */
+.progress-wrap{background:#21262D;border-radius:99px;height:6px;overflow:hidden}
+.progress-bar{height:100%;border-radius:99px;background:linear-gradient(to right,#D4A853,#F0C97A);transition:width 0.6s ease}
+
+/* ROOM GRID */
+.room-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.room-tile{background:#21262D;border:1px solid #30363D;border-radius:8px;padding:14px;cursor:pointer;transition:all 0.2s;position:relative}
+.room-tile:hover{border-color:#D4A853;transform:translateY(-2px)}
+.room-tile.available{border-left:3px solid #3FB950}
+.room-tile.occupied{border-left:3px solid #F85149}
+.room-tile.cleaning{border-left:3px solid #D4A853}
+.room-tile.maintenance{border-left:3px solid #8B949E}
+
+/* CHAT */
+.chat-bubble{padding:10px 14px;border-radius:12px;font-size:0.83rem;max-width:75%;line-height:1.5}
+.chat-bubble.sent{background:rgba(212,168,83,0.15);border:1px solid rgba(212,168,83,0.2);color:#C9D1D9;margin-left:auto;border-radius:12px 12px 4px 12px}
+.chat-bubble.recv{background:#21262D;border:1px solid #30363D;color:#C9D1D9;border-radius:12px 12px 12px 4px}
+
+/* TIMELINE */
+.timeline-item{display:flex;gap:12px;padding-bottom:16px}
+.timeline-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.timeline-line{width:1px;background:#21262D;flex-shrink:0;margin:0 4.5px}
+
+/* ANIMATIONS */
+.fade-in{animation:fadeIn 0.35s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* RESPONSIVE */
+@media(max-width:768px){.sidebar{display:none}.mobile-nav-btn{display:flex}}
+
+/* SCROLLABLE CONTENT */
+.scroll-area{overflow-y:auto;height:100%}
+
+/* VISITOR PAGE */
+.visitor-hero{background:linear-gradient(135deg,#0D1117 0%,#161B22 50%,#0D1117 100%);position:relative;overflow:hidden}
+.visitor-hero::before{content:'';position:absolute;inset:0;background:url('https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1200&q=70') center/cover;opacity:0.12}
+
+/* SEARCH BAR */
+.search-bar{background:#21262D;border:1px solid #30363D;border-radius:8px;display:flex;align-items:center;gap:8px;padding:0 12px;transition:border-color 0.2s}
+.search-bar:focus-within{border-color:#D4A853;box-shadow:0 0 0 3px rgba(212,168,83,0.08)}
+.search-bar input{background:transparent;border:none;outline:none;color:#C9D1D9;font-family:'Outfit',sans-serif;font-size:0.85rem;padding:9px 0;flex:1}
+
+/* INVOICE */
+@media print{body{background:white;color:black}.no-print{display:none}}
+
+/* AUTH OVERLAY */
+.auth-overlay{position:fixed;inset:0;background:#0D1117;z-index:10000;display:flex;flex-direction:column;overflow-y:auto}
+.auth-overlay.hidden{display:none}
+.inp-auth{background:#21262D;border:1px solid #30363D;color:#C9D1D9;border-radius:6px;padding:10px 14px;font-family:'Outfit',sans-serif;font-size:0.88rem;transition:border-color 0.2s,box-shadow 0.2s;width:100%}
+.inp-auth:focus{outline:none;border-color:#D4A853;box-shadow:0 0 0 3px rgba(212,168,83,0.1)}
+.inp-auth::placeholder{color:#8B949E}
+.inp-auth option{background:#161B22}
+.role-pill-auth{padding:8px 14px;border-radius:6px;font-size:0.78rem;font-weight:500;cursor:pointer;border:1px solid #30363D;background:transparent;color:#8B949E;transition:all 0.2s;font-family:'Outfit',sans-serif;flex:1;text-align:center}
+.role-pill-auth:hover{border-color:#D4A853;color:#D4A853}
+.role-pill-auth.selected{background:rgba(212,168,83,0.12);border-color:rgba(212,168,83,0.4);color:#D4A853}
+.auth-tab-toggle{display:flex;background:#21262D;border-radius:8px;padding:3px;gap:2px;border:1px solid #30363D}
+.auth-tab-toggle button{flex:1;padding:8px;border-radius:6px;border:none;font-family:'Outfit',sans-serif;font-size:0.82rem;font-weight:500;cursor:pointer;transition:all 0.2s;color:#8B949E;background:transparent;letter-spacing:0.03em}
+.auth-tab-toggle button.active{background:#161B22;color:#C9D1D9;box-shadow:0 1px 4px rgba(0,0,0,0.4)}
+.auth-bg-hero{position:fixed;inset:0;background:url('https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1400&q=70') center/cover;opacity:0.06;pointer-events:none}
+.auth-bg-grad{position:fixed;inset:0;background:radial-gradient(ellipse at 30% 20%,rgba(212,168,83,0.04) 0%,transparent 60%),radial-gradient(ellipse at 70% 80%,rgba(212,168,83,0.03) 0%,transparent 60%);pointer-events:none}
+.auth-label{font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;color:#8B949E;display:block;margin-bottom:5px;font-weight:500}
+.auth-err-msg{font-size:0.72rem;color:#F85149;margin-top:4px;display:none}
+.auth-field-error .inp-auth{border-color:#F85149}
+.auth-field-error .auth-err-msg{display:block}
+.auth-eye-btn{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:#8B949E;cursor:pointer;font-size:1rem;transition:color 0.2s;padding:0;line-height:1}
+.auth-eye-btn:hover{color:#D4A853}
+.auth-strength-bar{height:3px;border-radius:99px;transition:width 0.4s ease,background 0.4s ease}
+.auth-divider{display:flex;align-items:center;gap:12px;margin:4px 0}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:#21262D}
+.auth-step-dot{width:24px;height:24px;border-radius:50%;font-size:0.7rem;font-weight:600;display:flex;align-items:center;justify-content:center;transition:all 0.3s;flex-shrink:0}
+.auth-step-dot.done{background:#D4A853;color:#0D1117}
+.auth-step-dot.active{background:rgba(212,168,83,0.15);border:2px solid #D4A853;color:#D4A853}
+.auth-step-dot.pending{background:#21262D;border:1px solid #30363D;color:#8B949E}
+.auth-step-line{flex:1;height:1px;background:#21262D;margin:0 6px;transition:background 0.3s}
+.auth-step-line.done{background:#D4A853}
+.auth-pw-req{display:flex;align-items:center;gap:8px;font-size:0.75rem;color:#8B949E}
+input[type="checkbox"]{accent-color:#D4A853;width:14px;height:14px;cursor:pointer}
+.fade-in-auth{animation:fadeInAuth 0.4s ease}
+@keyframes fadeInAuth{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* USER DROPDOWN */
+.user-dropdown{position:absolute;top:calc(100% + 8px);right:0;background:#161B22;border:1px solid #30363D;border-radius:8px;min-width:200px;box-shadow:0 8px 32px rgba(0,0,0,0.5);z-index:1000;animation:slideUp 0.2s ease;overflow:hidden}
+.user-dropdown-item{display:flex;align-items:center;gap:10px;padding:10px 14px;font-size:0.82rem;color:#8B949E;cursor:pointer;transition:all 0.15s;border:none;background:transparent;width:100%;text-align:left;font-family:'Outfit',sans-serif}
+.user-dropdown-item:hover{background:#21262D;color:#C9D1D9}
+.user-dropdown-item.danger{color:#F85149}
+.user-dropdown-item.danger:hover{background:rgba(218,54,51,0.1);color:#F85149}
+</style>
+</head>
+<body class="flex flex-col" style="height:100vh">
+
+<!-- TOAST CONTAINER -->
+<div id="toastWrap" class="toast-wrap"></div>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- AUTH OVERLAY (shown on startup / after logout)     -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div id="authOverlay" class="auth-overlay">
+  <div class="auth-bg-hero"></div>
+  <div class="auth-bg-grad"></div>
+
+  <!-- AUTH TOP BAR -->
+  <div style="background:#161B22;border-bottom:1px solid #21262D;padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:10;position:relative">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="gold-dot"></div>
+      <span style="font-family:'Playfair Display',serif;font-size:1.15rem;color:#D4A853;font-style:italic;letter-spacing:0.02em">Aurelia</span>
+      <span style="font-size:0.68rem;font-weight:300;color:#8B949E;letter-spacing:0.14em;text-transform:uppercase;padding-left:8px;border-left:1px solid #30363D">Grand HMS</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px">
+      <span style="font-size:0.78rem;color:#8B949E" id="authTopBarMsg">Welcome to Aurelia Grand</span>
+      <button onclick="authSwitchTab('login')" class="btn btn-ghost" style="width:auto;padding:6px 16px;font-size:0.78rem" id="authTopSignInBtn">Sign In</button>
+      <button onclick="document.getElementById('authOverlay').classList.add('hidden')" class="btn btn-ghost" style="width:auto;padding:6px 12px;font-size:0.78rem" id="authCloseBtn">✕</button>
+    </div>
+  </div>
+
+  <!-- AUTH MAIN -->
+  <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:32px 16px;position:relative;z-index:1">
+    <div style="width:100%;max-width:440px">
+
+      <!-- BRAND -->
+      <div style="text-align:center;margin-bottom:28px">
+        <div style="display:inline-flex;align-items:center;gap:10px;margin-bottom:12px">
+          <div style="height:1px;width:32px;background:linear-gradient(to right,transparent,#D4A853)"></div>
+          <span style="font-size:0.65rem;letter-spacing:0.2em;text-transform:uppercase;color:#D4A853;font-weight:500" id="authBrandTagline">Welcome</span>
+          <div style="height:1px;width:32px;background:linear-gradient(to left,transparent,#D4A853)"></div>
+        </div>
+        <h1 style="font-family:'Playfair Display',serif;font-size:2rem;color:#C9D1D9;font-style:italic;line-height:1.1">Aurelia Grand</h1>
+        <p style="font-size:0.78rem;color:#8B949E;margin-top:6px;letter-spacing:0.04em">Hotel Management System</p>
+      </div>
+
+      <!-- CARD -->
+      <div style="background:#161B22;border:1px solid #21262D;border-radius:12px;padding:28px" class="fade-in-auth">
+
+        <!-- TAB TOGGLE -->
+        <div class="auth-tab-toggle" style="margin-bottom:24px">
+          <button id="auth-tab-login" class="active" onclick="authSwitchTab('login')">Sign In</button>
+          <button id="auth-tab-register" onclick="authSwitchTab('register')">Create Account</button>
+        </div>
+
+        <!-- ═══ LOGIN PANEL ═══ -->
+        <div id="auth-panel-login">
+          <div style="margin-bottom:20px">
+            <p style="font-size:0.82rem;color:#8B949E;line-height:1.6">Sign in to access your dashboard. Enter your credentials below.</p>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:14px">
+            <!-- Email -->
+            <div id="auth-f-email">
+              <label class="auth-label">Email Address</label>
+              <div style="position:relative">
+                <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#8B949E;font-size:0.95rem">✉</span>
+                <input class="inp-auth" id="authLoginEmail" type="email" placeholder="you@aureliagrand.com" style="padding-left:36px" oninput="authClearErr('auth-f-email')"/>
+              </div>
+              <span class="auth-err-msg">Please enter a valid email address.</span>
+            </div>
+            <!-- Password -->
+            <div id="auth-f-pass">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+                <label class="auth-label" style="margin-bottom:0">Password</label>
+                <a href="#" onclick="authForgotPassword(event)" style="font-size:0.7rem;color:#D4A853;text-decoration:none;letter-spacing:0.04em">Forgot password?</a>
+              </div>
+              <div style="position:relative">
+                <input class="inp-auth" id="authLoginPass" type="password" placeholder="Enter your password" oninput="authClearErr('auth-f-pass')"/>
+                <button type="button" class="auth-eye-btn" onclick="authToggleEye('authLoginPass',this)">👁</button>
+              </div>
+              <span class="auth-err-msg">Password is required.</span>
+            </div>
+            <!-- Role -->
+            <div>
+              <label class="auth-label">Sign in as</label>
+              <div style="display:flex;gap:6px">
+                <button class="role-pill-auth selected" onclick="authSelectRole(this,'guest')" data-role="guest">🛎 Guest</button>
+                <button class="role-pill-auth" onclick="authSelectRole(this,'staff')" data-role="staff">👷 Staff</button>
+                <button class="role-pill-auth" onclick="authSelectRole(this,'admin')" data-role="admin">🔑 Admin</button>
+              </div>
+            </div>
+            <!-- Remember -->
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.8rem;color:#8B949E">
+              <input type="checkbox" id="authRememberMe"/> Remember me for 30 days
+            </label>
+            <!-- Submit -->
+            <button class="btn btn-gold" onclick="authHandleLogin()" style="width:100%;font-size:0.85rem;padding:12px;justify-content:center">
+              <span>Sign In</span> <span>→</span>
+            </button>
+          </div>
+          <p style="text-align:center;font-size:0.75rem;color:#8B949E;margin-top:20px">
+            Don't have an account? <a href="#" onclick="authSwitchTab('register');event.preventDefault()" style="color:#D4A853;text-decoration:none">Create one →</a>
+          </p>
+        </div>
+
+        <!-- ═══ REGISTER PANEL ═══ -->
+        <div id="auth-panel-register" style="display:none">
+          <!-- Step indicator -->
+          <div style="display:flex;align-items:center;gap:0;margin-bottom:22px">
+            <div class="auth-step-dot active" id="auth-sdot1">1</div>
+            <div class="auth-step-line" id="auth-sline1"></div>
+            <div class="auth-step-dot pending" id="auth-sdot2">2</div>
+            <div class="auth-step-line" id="auth-sline2"></div>
+            <div class="auth-step-dot pending" id="auth-sdot3">3</div>
+          </div>
+          <p id="auth-stepLabel" style="font-size:0.7rem;color:#8B949E;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:20px;font-weight:500">Step 1 of 3 — Personal Info</p>
+
+          <!-- STEP 1 -->
+          <div id="auth-reg-step1" style="display:flex;flex-direction:column;gap:14px">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div id="auth-f-fname">
+                <label class="auth-label">First Name</label>
+                <input class="inp-auth" id="authRegFname" placeholder="First name" oninput="authClearErr('auth-f-fname')"/>
+                <span class="auth-err-msg">Required.</span>
+              </div>
+              <div id="auth-f-lname">
+                <label class="auth-label">Last Name</label>
+                <input class="inp-auth" id="authRegLname" placeholder="Last name" oninput="authClearErr('auth-f-lname')"/>
+                <span class="auth-err-msg">Required.</span>
+              </div>
+            </div>
+            <div id="auth-f-remail">
+              <label class="auth-label">Email Address</label>
+              <div style="position:relative">
+                <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#8B949E;font-size:0.9rem">✉</span>
+                <input class="inp-auth" id="authRegEmail" type="email" placeholder="you@example.com" style="padding-left:36px" oninput="authClearErr('auth-f-remail')"/>
+              </div>
+              <span class="auth-err-msg">Enter a valid email.</span>
+            </div>
+            <div>
+              <label class="auth-label">Phone Number</label>
+              <div style="position:relative">
+                <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#8B949E;font-size:0.9rem">📞</span>
+                <input class="inp-auth" id="authRegPhone" type="tel" placeholder="+880 (000) 000-0000" style="padding-left:36px"/>
+              </div>
+            </div>
+            <button class="btn btn-gold" onclick="authNextStep(2)" style="width:100%;justify-content:center">Continue <span>→</span></button>
+          </div>
+
+          <!-- STEP 2 -->
+          <div id="auth-reg-step2" style="display:none;flex-direction:column;gap:14px">
+            <div>
+              <label class="auth-label">Account Type</label>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <button class="role-pill-auth selected" style="flex:none;text-align:left;padding:12px 16px;display:flex;align-items:center;gap:10px;width:100%" onclick="authSelectAccountType(this,'guest')">
+                  <span style="font-size:1.2rem">🛎</span>
+                  <div><div style="font-size:0.82rem;font-weight:500">Guest Account</div><div style="font-size:0.7rem;color:#8B949E;margin-top:1px">Book rooms, manage reservations</div></div>
+                </button>
+                <button class="role-pill-auth" style="flex:none;text-align:left;padding:12px 16px;display:flex;align-items:center;gap:10px;width:100%" onclick="authSelectAccountType(this,'staff')">
+                  <span style="font-size:1.2rem">👷</span>
+                  <div><div style="font-size:0.82rem;font-weight:500">Staff Account</div><div style="font-size:0.7rem;color:#8B949E;margin-top:1px">Requires staff ID for verification</div></div>
+                </button>
+              </div>
+            </div>
+            <div id="auth-staffIdWrap" style="display:none">
+              <label class="auth-label">Staff ID / Employee Code</label>
+              <input class="inp-auth" id="authRegStaffId" placeholder="e.g. AG-STAFF-2024"/>
+            </div>
+            <div>
+              <label class="auth-label">Nationality</label>
+              <select class="inp-auth" id="authRegNationality">
+                <option value="">Select nationality…</option>
+                <option>Bangladeshi</option><option>American</option><option>British</option><option>Canadian</option>
+                <option>Australian</option><option>French</option><option>German</option><option>Japanese</option>
+                <option>Chinese</option><option>Indian</option><option>Other</option>
+              </select>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <button class="btn btn-ghost" onclick="authNextStep(1)" style="width:100%;justify-content:center">← Back</button>
+              <button class="btn btn-gold" onclick="authNextStep(3)" style="width:100%;justify-content:center">Continue →</button>
+            </div>
+          </div>
+
+          <!-- STEP 3 -->
+          <div id="auth-reg-step3" style="display:none;flex-direction:column;gap:14px">
+            <div id="auth-f-rpass">
+              <label class="auth-label">Password</label>
+              <div style="position:relative">
+                <input class="inp-auth" id="authRegPass" type="password" placeholder="Create a strong password" oninput="authCheckStrength(this.value);authClearErr('auth-f-rpass')"/>
+                <button type="button" class="auth-eye-btn" onclick="authToggleEye('authRegPass',this)">👁</button>
+              </div>
+              <div style="margin-top:8px">
+                <div style="background:#21262D;border-radius:99px;height:3px;overflow:hidden;margin-bottom:4px">
+                  <div class="auth-strength-bar" id="authStrengthBar" style="width:0%;background:#F85149"></div>
+                </div>
+                <span id="authStrengthLabel" style="font-size:0.7rem;color:#8B949E"></span>
+              </div>
+              <span class="auth-err-msg">Password must be at least 8 characters.</span>
+            </div>
+            <div id="auth-f-rpass2">
+              <label class="auth-label">Confirm Password</label>
+              <div style="position:relative">
+                <input class="inp-auth" id="authRegPass2" type="password" placeholder="Repeat your password" oninput="authClearErr('auth-f-rpass2')"/>
+                <button type="button" class="auth-eye-btn" onclick="authToggleEye('authRegPass2',this)">👁</button>
+              </div>
+              <span class="auth-err-msg">Passwords do not match.</span>
+            </div>
+            <div style="background:#21262D;border-radius:6px;padding:12px;display:flex;flex-direction:column;gap:6px">
+              <div class="auth-pw-req" data-req="length"><span class="auth-req-icon" style="font-size:0.8rem">○</span> At least 8 characters</div>
+              <div class="auth-pw-req" data-req="upper"><span class="auth-req-icon" style="font-size:0.8rem">○</span> One uppercase letter</div>
+              <div class="auth-pw-req" data-req="number"><span class="auth-req-icon" style="font-size:0.8rem">○</span> One number</div>
+              <div class="auth-pw-req" data-req="special"><span class="auth-req-icon" style="font-size:0.8rem">○</span> One special character</div>
+            </div>
+            <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;font-size:0.78rem;color:#8B949E;line-height:1.5">
+              <input type="checkbox" id="authAgreeTerms" style="margin-top:2px"/>
+              I agree to the <a href="#" style="color:#D4A853;text-decoration:none;margin:0 3px">Terms of Service</a> and <a href="#" style="color:#D4A853;text-decoration:none;margin:0 3px">Privacy Policy</a>
+            </label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <button class="btn btn-ghost" onclick="authNextStep(2)" style="justify-content:center">← Back</button>
+              <button class="btn btn-gold" onclick="authHandleRegister()" style="justify-content:center">Create Account ✓</button>
+            </div>
+          </div>
+
+          <p style="text-align:center;font-size:0.75rem;color:#8B949E;margin-top:20px">
+            Already have an account? <a href="#" onclick="authSwitchTab('login');event.preventDefault()" style="color:#D4A853;text-decoration:none">Sign in →</a>
+          </p>
+        </div>
+
+      </div>
+
+      <p style="text-align:center;font-size:0.7rem;color:#30363D;margin-top:20px;letter-spacing:0.06em;position:relative;z-index:1">
+        © 2026 Aurelia Grand HMS · Secured with AES-256
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- FORGOT PASSWORD MODAL (Auth) -->
+<div id="authFpModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:10100;backdrop-filter:blur(4px);align-items:center;justify-content:center">
+  <div style="background:#161B22;border:1px solid #21262D;border-radius:12px;width:90%;max-width:380px;padding:28px" class="fade-in-auth">
+    <h3 style="font-family:'Playfair Display',serif;font-size:1.2rem;color:#C9D1D9;font-style:italic;margin-bottom:6px">Reset Password</h3>
+    <p style="font-size:0.8rem;color:#8B949E;margin-bottom:20px;line-height:1.6">Enter your email and we'll send you a reset link.</p>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div>
+        <label class="auth-label">Email Address</label>
+        <input class="inp-auth" id="authFpEmail" type="email" placeholder="you@example.com"/>
+      </div>
+      <button class="btn btn-gold" onclick="authSendReset()" style="width:100%;justify-content:center">Send Reset Link</button>
+      <button class="btn btn-ghost" onclick="authCloseFP()" style="width:100%;justify-content:center">Cancel</button>
+    </div>
+  </div>
+</div>
+<div id="modal" class="modal-bg">
+  <div class="modal" id="modalBox">
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<!-- TOP BAR -->
+<div style="background:#161B22;border-bottom:1px solid #21262D;padding:0 16px;height:52px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:10">
+  <div style="display:flex;align-items:center;gap:16px">
+    <button onclick="toggleSidebar()" style="background:none;border:none;color:#8B949E;cursor:pointer;font-size:1.1rem;padding:4px">☰</button>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-family:'Playfair Display',serif;font-size:1.1rem;color:#D4A853;font-style:italic">Aurelia</span>
+      <span style="font-size:0.7rem;font-weight:300;color:#8B949E;letter-spacing:0.1em;text-transform:uppercase">Grand HMS</span>
+    </div>
+    <div id="pageBreadcrumb" style="color:#8B949E;font-size:0.78rem;padding-left:8px;border-left:1px solid #30363D"></div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <div id="currentRoleBadge" class="role-badge role-visitor">Visitor</div>
+    <!-- Header Sign In Button -->
+    <button id="headerSignInBtn" class="btn btn-gold" style="border-radius: 8px; font-weight: 500; font-size: 0.85rem; padding: 6px 14px; gap: 6px; display: none;" onclick="openAuthLogin()">
+      <span>🔑</span> Sign In
+    </button>
+    <!-- User avatar + dropdown trigger -->
+    <div style="position:relative" id="userMenuWrap">
+      <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#D4A853,#F0C97A);display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;color:#0D1117;cursor:pointer;user-select:none" id="avatarBtn" onclick="toggleUserDropdown()" title="Account menu"></div>
+      <!-- Dropdown -->
+      <div class="user-dropdown" id="userDropdown" style="display:none;">
+        <div style="padding:12px 14px;border-bottom:1px solid #21262D">
+          <p style="font-size:0.82rem;color:#C9D1D9;font-weight:500" id="ddUserName">Guest User</p>
+          <p style="font-size:0.7rem;color:#8B949E;margin-top:1px" id="ddUserRole">Visitor Account</p>
+        </div>
+        <div style="padding:6px">
+          <button class="user-dropdown-item" onclick="ddProfile()">👤 My Profile</button>
+          <button class="user-dropdown-item" onclick="ddSettings()">⚙️ Settings</button>
+          <div style="height:1px;background:#21262D;margin:4px 0"></div>
+          <button class="user-dropdown-item danger" onclick="authLogout()">🚪 Log Out</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN LAYOUT -->
+<div style="display:flex;flex:1;overflow:hidden">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div style="padding:12px 8px;overflow-y:auto;flex:1">
+      <div id="sidebarMenu"></div>
+    </div>
+    <div style="padding:12px;border-top:1px solid #21262D;margin-top:auto">
+      <div style="display:flex;align-items:center;gap:8px;padding:8px">
+        <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#D4A853,#F0C97A);display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;color:#0D1117;flex-shrink:0" id="sidebarAvatar"></div>
+        <div class="sidebar-label" style="overflow:hidden">
+          <p style="font-size:0.78rem;color:#C9D1D9;white-space:nowrap" id="sidebarName"></p>
+          <p style="font-size:0.65rem;color:#8B949E;white-space:nowrap" id="sidebarRole"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTENT AREA -->
+  <div style="flex:1;overflow:hidden;display:flex;flex-direction:column">
+    <div class="scroll-area" id="mainContent" style="padding:20px">
+      <!-- content injected here -->
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// AUTH SYSTEM
+// ═══════════════════════════════════════════════════
+let authCurrentTab = 'login';
+let authCurrentStep = 1;
+let authSelectedRole = 'guest';
+let authSelectedAccountType = 'guest';
+let isLoggedIn = false;
+let loggedInUser = null;
+let lastRoomsJSON = "";
+
+// Show home page on load (login only required for booking)
+window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('authOverlay').classList.add('hidden');
+  authGoToStep(1);
+});
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(e) {
+  const wrap = document.getElementById('userMenuWrap');
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById('userDropdown').style.display = 'none';
+  }
+});
+
+function toggleUserDropdown() {
+  const dd = document.getElementById('userDropdown');
+  dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+}
+
+function ddProfile() {
+  document.getElementById('userDropdown').style.display = 'none';
+  toast('Profile settings coming soon!', 'gold');
+}
+function ddSettings() {
+  document.getElementById('userDropdown').style.display = 'none';
+  toast('Settings panel coming soon!', 'gold');
+}
+
+async function authLogout() {
+  document.getElementById('userDropdown').style.display = 'none';
+  try { await fetch('logout.php'); } catch(e) {}
+  isLoggedIn = false;
+  loggedInUser = null;
+  switchRole('visitor');
+  const overlay = document.getElementById('authOverlay');
+  overlay.classList.remove('hidden');
+  authSwitchTab('login');
+  document.getElementById('authBrandTagline').textContent = 'Welcome Back';
+  document.getElementById('authTopBarMsg').textContent = 'Already have an account?';
+  document.getElementById('authTopSignInBtn').style.display = 'inline-flex';
+  toast('You have been logged out. See you soon!', 'gold');
+}
+
+function openAuthLogin() {
+  const overlay = document.getElementById('authOverlay');
+  overlay.classList.remove('hidden');
+  authSwitchTab('login');
+}
+
+function capitalize(str) {
+  if (!str) return '';
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+function authCompleteLogin(role, name) {
+  isLoggedIn = true;
+  loggedInUser = { role, name };
+  // Hide overlay
+  document.getElementById('authOverlay').classList.add('hidden');
+  // Update HMS top bar
+  switchRole(role);
+  // Update dropdown info
+  document.getElementById('ddUserName').textContent = name;
+  document.getElementById('ddUserRole').textContent = capitalize(role) + ' Account';
+  toast('Welcome back, ' + name + '! Logged in as ' + capitalize(role) + '.', 'green');
+  // Resume pending booking if any
+  if(window._pendingBooking){
+    const {roomId,type,price}=window._pendingBooking;
+    window._pendingBooking=null;
+    setTimeout(()=>openBookingModal(roomId,type,price),400);
+  }
+}
+
+// ── Auth form logic ────────────────────────────────
+function authSwitchTab(tab) {
+  authCurrentTab = tab;
+  document.getElementById('auth-panel-login').style.display    = tab==='login'    ? 'block' : 'none';
+  document.getElementById('auth-panel-register').style.display = tab==='register' ? 'block' : 'none';
+  document.getElementById('auth-tab-login').classList.toggle('active', tab==='login');
+  document.getElementById('auth-tab-register').classList.toggle('active', tab==='register');
+  if (tab === 'register') authGoToStep(1);
+}
+
+function authSelectRole(el, role) {
+  authSelectedRole = role;
+  document.querySelectorAll('#auth-panel-login .role-pill-auth').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function authSelectAccountType(el, type) {
+  authSelectedAccountType = type;
+  document.querySelectorAll('#auth-reg-step2 .role-pill-auth').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('auth-staffIdWrap').style.display = type === 'staff' ? 'block' : 'none';
+}
+
+function authGoToStep(n) {
+  [1, 2, 3].forEach(i => {
+    const el = document.getElementById('auth-reg-step' + i);
+    if (el) el.style.display = i === n ? 'flex' : 'none';
+  });
+  authCurrentStep = n;
+  authUpdateStepUI();
+}
+
+function authUpdateStepUI() {
+  const labels = ['Step 1 of 3 — Personal Info','Step 2 of 3 — Account Type','Step 3 of 3 — Set Password'];
+  document.getElementById('auth-stepLabel').textContent = labels[authCurrentStep - 1];
+  [1, 2, 3].forEach(i => {
+    const dot = document.getElementById('auth-sdot' + i);
+    if (i < authCurrentStep)      { dot.className = 'auth-step-dot done';   dot.textContent = '✓'; }
+    else if (i === authCurrentStep){ dot.className = 'auth-step-dot active'; dot.textContent = i; }
+    else                           { dot.className = 'auth-step-dot pending';dot.textContent = i; }
+    if (i < 3) {
+      const line = document.getElementById('auth-sline' + i);
+      line.classList.toggle('done', i < authCurrentStep);
+    }
+  });
+}
+
+function authNextStep(n) {
+  if (n > authCurrentStep && !authValidateStep(authCurrentStep)) return;
+  authGoToStep(n);
+}
+
+function authValidateStep(step) {
+  if (step === 1) {
+    let ok = true;
+    if (!document.getElementById('authRegFname').value.trim())   { authSetErr('auth-f-fname');  ok = false; }
+    if (!document.getElementById('authRegLname').value.trim())   { authSetErr('auth-f-lname');  ok = false; }
+    const em = document.getElementById('authRegEmail').value;
+    if (!em || !/^[^@]+@[^@]+\.[^@]+$/.test(em))                { authSetErr('auth-f-remail'); ok = false; }
+    return ok;
+  }
+  return true;
+}
+
+async function authHandleLogin() {
+  let ok = true;
+  const email = document.getElementById('authLoginEmail').value;
+  const pass  = document.getElementById('authLoginPass').value;
+  if (!email || !/^[^@]+@[^@]+\.[^@]+$/.test(email)) { authSetErr('auth-f-email'); ok = false; }
+  if (!pass)                                           { authSetErr('auth-f-pass');  ok = false; }
+  if (!ok) return;
+
+  toast('Signing in…', 'gold');
+  try {
+    const fd = new FormData();
+    fd.append('email', email);
+    fd.append('password', pass);
+    const res  = await fetch('login.php', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.success) {
+      authCompleteLogin(data.user.role, data.user.name);
+    } else {
+      toast(data.message || 'Login failed.', 'red');
+    }
+  } catch(e) {
+    toast('Could not reach server. Is XAMPP running?', 'red');
+  }
+}
+
+async function authHandleRegister() {
+  const pass  = document.getElementById('authRegPass').value;
+  const pass2 = document.getElementById('authRegPass2').value;
+  let ok = true;
+  if (pass.length < 8) { authSetErr('auth-f-rpass');  ok = false; }
+  if (pass !== pass2)  { authSetErr('auth-f-rpass2'); ok = false; }
+  if (!document.getElementById('authAgreeTerms').checked) {
+    toast('Please agree to the Terms of Service.', 'red'); ok = false;
+  }
+  if (!ok) return;
+
+  const fname = document.getElementById('authRegFname').value.trim();
+  const lname = document.getElementById('authRegLname').value.trim();
+  const email = document.getElementById('authRegEmail').value.trim();
+  const role  = authSelectedAccountType;
+
+  toast('Creating your account…', 'gold');
+  try {
+    const fd = new FormData();
+    fd.append('first_name', fname);
+    fd.append('last_name',  lname);
+    fd.append('email',      email);
+    fd.append('password',   pass);
+    fd.append('role',       role);
+    const res  = await fetch('register.php', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.success) {
+      toast('Account created! Welcome to Aurelia Grand.', 'green');
+      setTimeout(() => authCompleteLogin(data.user.role, data.user.name), 800);
+    } else {
+      const msg = data.errors ? data.errors.map(e=>e).join(', ') : (data.message || 'Registration failed.');
+      toast(msg, 'red');
+    }
+  } catch(e) {
+    toast('Could not reach server. Is XAMPP running?', 'red');
+  }
+}
+
+function authCheckStrength(val) {
+  const reqs = {
+    length:  val.length >= 8,
+    upper:   /[A-Z]/.test(val),
+    number:  /[0-9]/.test(val),
+    special: /[^A-Za-z0-9]/.test(val)
+  };
+  document.querySelectorAll('.auth-pw-req').forEach(el => {
+    const key = el.dataset.req;
+    const icon = el.querySelector('.auth-req-icon');
+    if (reqs[key]) { el.style.color = '#3FB950'; if(icon) icon.textContent = '✓'; }
+    else           { el.style.color = '#8B949E'; if(icon) icon.textContent = '○'; }
+  });
+  const score = Object.values(reqs).filter(Boolean).length;
+  const bar   = document.getElementById('authStrengthBar');
+  const label = document.getElementById('authStrengthLabel');
+  const map   = [['0%','#21262D',''],['25%','#F85149','Weak'],['50%','#D29922','Fair'],['75%','#58A6FF','Good'],['100%','#3FB950','Strong']];
+  const s = map[score];
+  bar.style.width = s[0]; bar.style.background = s[1];
+  label.textContent = s[2]; label.style.color = s[1];
+}
+
+function authToggleEye(id, btn) {
+  const el = document.getElementById(id);
+  if (el.type === 'password') { el.type = 'text';     btn.textContent = '🙈'; }
+  else                         { el.type = 'password'; btn.textContent = '👁'; }
+}
+
+function authForgotPassword(e) {
+  e.preventDefault();
+  document.getElementById('authFpModal').style.display = 'flex';
+}
+function authCloseFP() { document.getElementById('authFpModal').style.display = 'none'; }
+function authSendReset() {
+  const em = document.getElementById('authFpEmail').value;
+  if (!em || !/^[^@]+@[^@]+\.[^@]+$/.test(em)) { toast('Enter a valid email address.', 'red'); return; }
+  authCloseFP();
+  toast('Reset link sent! Check your inbox.', 'green');
+}
+document.getElementById('authFpModal').addEventListener('click', function(e) { if (e.target === this) authCloseFP(); });
+
+function authSetErr(id)   { document.getElementById(id).classList.add('auth-field-error'); }
+function authClearErr(id) { document.getElementById(id).classList.remove('auth-field-error'); }
+
+// ═══════════════════════════════════════════════════
+// GLOBAL STATE
+// ═══════════════════════════════════════════════════
+let currentRole = 'visitor';
+let currentPage = '';
+let sidebarCollapsed = false;
+
+const state = {
+  rooms: [
+    {id:'101',type:'Deluxe',floor:1,status:'available',price:150,capacity:2,amenities:['WiFi','TV','AC'],guest:null,img:'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=300&q=70'},
+    {id:'102',type:'Deluxe',floor:1,status:'occupied',price:150,capacity:2,amenities:['WiFi','TV','AC'],guest:'Alice Johnson',img:'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=300&q=70'},
+    {id:'201',type:'Superior',floor:2,status:'cleaning',price:220,capacity:2,amenities:['WiFi','TV','AC','Bathtub'],guest:null,img:'https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=300&q=70'},
+    {id:'202',type:'Superior',floor:2,status:'available',price:220,capacity:2,amenities:['WiFi','TV','AC','Bathtub'],guest:null,img:'https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=300&q=70'},
+    {id:'301',type:'Junior Suite',floor:3,status:'occupied',price:320,capacity:3,amenities:['WiFi','TV','AC','Lounge','Nespresso'],guest:'Bob Smith',img:'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=300&q=70'},
+    {id:'302',type:'Junior Suite',floor:3,status:'available',price:320,capacity:3,amenities:['WiFi','TV','AC','Lounge','Nespresso'],guest:null,img:'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=300&q=70'},
+    {id:'401',type:'Grand Suite',floor:4,status:'maintenance',price:480,capacity:4,amenities:['WiFi','TV','AC','Jacuzzi','Bar','Dining'],guest:null,img:'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=300&q=70'},
+    {id:'501',type:'Presidential',floor:5,status:'available',price:780,capacity:4,amenities:['WiFi','TV','AC','Jacuzzi','Butler','Terrace','Bar'],guest:null,img:'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=300&q=70'},
+  ],
+  bookings: [
+    {id:'BK001',guest:'Alice Johnson',room:'102',type:'Deluxe',checkin:'2026-03-25',checkout:'2026-03-30',status:'confirmed',total:750,nights:5},
+    {id:'BK002',guest:'Bob Smith',room:'301',type:'Junior Suite',checkin:'2026-03-27',checkout:'2026-04-02',status:'confirmed',total:1920,nights:6},
+    {id:'BK003',guest:'Carol White',room:'201',type:'Superior',checkin:'2026-04-01',checkout:'2026-04-05',status:'pending',total:880,nights:4},
+    {id:'BK004',guest:'David Lee',room:'202',type:'Superior',checkin:'2026-04-10',checkout:'2026-04-13',status:'pending',total:660,nights:3},
+    {id:'BK005',guest:'Emma Davis',room:'302',type:'Junior Suite',checkin:'2026-04-15',checkout:'2026-04-20',status:'cancelled',total:1600,nights:5},
+  ],
+  staff: [
+    {id:'S01',name:'Maria Santos',role:'Housekeeper',zone:'Floor 1-2',schedule:'08:00–16:00',status:'on-duty',tasks:3},
+    {id:'S02',name:'James Kho',role:'Room Service',zone:'All Floors',schedule:'12:00–20:00',status:'on-duty',tasks:5},
+    {id:'S03',name:'Fatima Haque',role:'Receptionist',zone:'Lobby',schedule:'09:00–17:00',status:'on-duty',tasks:2},
+    {id:'S04',name:'Carlos Rivera',role:'Maintenance',zone:'Floor 3-5',schedule:'07:00–15:00',status:'off-duty',tasks:1},
+    {id:'S05',name:'Ananya Pal',role:'Housekeeper',zone:'Floor 3-5',schedule:'08:00–16:00',status:'on-duty',tasks:4},
+  ],
+  orders: [
+    {id:'ORD001',guest:'Alice Johnson',room:'102',items:'Club Sandwich × 1, Fresh Juice × 2',total:36,status:'delivered',time:'10:30 AM'},
+    {id:'ORD002',guest:'Bob Smith',room:'301',items:'Wagyu Burger × 2, Champagne × 1',total:159,status:'preparing',time:'12:15 PM'},
+    {id:'ORD003',guest:'Alice Johnson',room:'102',items:'Pasta Carbonara × 1',total:26,status:'pending',time:'01:00 PM'},
+  ],
+  cleaningRequests: [
+    {id:'CR001',room:'201',requestedBy:'Staff',priority:'high',status:'in-progress',assignedTo:'Maria Santos',time:'09:00 AM'},
+    {id:'CR002',room:'102',requestedBy:'Alice Johnson',priority:'normal',status:'pending',assignedTo:'Maria Santos',time:'11:30 AM'},
+    {id:'CR003',room:'301',requestedBy:'Bob Smith',priority:'normal',status:'done',assignedTo:'Ananya Pal',time:'08:00 AM'},
+  ],
+  reviews: [
+    {guest:'James R.',rating:5,comment:'Presidential Suite was worth every penny. Impeccable service from check-in to check-out.',date:'Mar 20, 2026'},
+    {guest:'Priya M.',rating:5,comment:'The concierge arranged a surprise anniversary dinner that exceeded every expectation.',date:'Mar 18, 2026'},
+    {guest:'Sophie L.',rating:4,comment:'Seamless booking, beautiful room. Room service could be a bit faster.',date:'Mar 15, 2026'},
+    {guest:'David K.',rating:5,comment:'Best hotel in Dhaka, no competition. The spa was extraordinary.',date:'Mar 10, 2026'},
+  ],
+  chatMessages: [
+    {from:'Reception',text:'Welcome to Aurelia Grand! How can we assist you today?',time:'10:00 AM',sent:false},
+    {from:'Guest',text:'Hi, I need extra towels in room 102 please.',time:'10:02 AM',sent:true},
+    {from:'Reception',text:'Of course! We will have those delivered within 15 minutes.',time:'10:03 AM',sent:false},
+  ],
+  staffTasks: [
+    { id: 1, time: '12:15 PM', task: 'Deliver room service order', room: '301', priority: 'High', status: 'In Progress' },
+    { id: 2, time: '01:00 PM', task: 'Deliver room service order', room: '102', priority: 'Normal', status: 'Pending' },
+    { id: 3, time: '02:30 PM', task: 'Mini-bar restock', room: '201', priority: 'Normal', status: 'Pending' },
+    { id: 4, time: '04:00 PM', task: 'Evening turndown setup', room: '102', priority: 'Normal', status: 'Pending' },
+    { id: 5, time: '06:00 PM', task: 'Dinner room service', room: '301', priority: 'High', status: 'Pending' }
+  ],
+  adminTasks: []
+};
+
+// ═══════════════════════════════════════════════════
+// ROLE CONFIGS
+// ═══════════════════════════════════════════════════
+const roles = {
+  visitor: {
+    label:'Visitor', color:'role-visitor', avatar:'V', name:'Guest User',
+    menu:[
+      {icon:'🏨',label:'Hotel Overview',page:'visitor-home'},
+      {icon:'🛏️',label:'Browse Rooms',page:'visitor-rooms'},
+      {icon:'⭐',label:'Reviews',page:'visitor-reviews'},
+      {icon:'📞',label:'Contact Us',page:'visitor-contact'},
+    ]
+  },
+  guest: {
+    label:'Guest', color:'role-guest', avatar:'A', name:'Alice Johnson',
+    menu:[
+      {icon:'🏠',label:'My Dashboard',page:'guest-dashboard'},
+      {icon:'🛏️',label:'Browse Rooms',page:'guest-rooms'},
+      {icon:'📅',label:'My Bookings',page:'guest-bookings'},
+      {icon:'🍽️',label:'Room Service',page:'guest-roomservice'},
+      {icon:'🧹',label:'Request Cleaning',page:'guest-cleaning'},
+      {icon:'📄',label:'My Invoices',page:'guest-invoices'},
+      {icon:'💬',label:'Chat Reception',page:'guest-chat'},
+    ]
+  },
+  staff: {
+    label:'Staff', color:'role-staff', avatar:'J', name:'James Kho',
+    menu:[
+      {icon:'📋',label:'My Schedule',page:'staff-schedule'},
+      {icon:'📦',label:'Manage Bookings',page:'staff-bookings'},
+      {icon:'🛎️',label:'Room Service Orders',page:'staff-orders'},
+      {icon:'🧹',label:'Cleaning Requests',page:'staff-cleaning'},
+      {icon:'🛏️',label:'Room Status',page:'staff-rooms'},
+    ]
+  },
+  admin: {
+    label:'Admin', color:'role-admin', avatar:'⚙', name:'Administrator',
+    menu:[
+      {icon:'📊',label:'Dashboard',page:'admin-dashboard'},
+      {icon:'🛏️',label:'Room Management',page:'admin-rooms'},
+      {icon:'👥',label:'Staff Management',page:'admin-staff'},
+      {icon:'📅',label:'Bookings',page:'admin-bookings'},
+      {icon:'📈',label:'Reports',page:'admin-reports'},
+      {icon:'📋',label:'Task Scheduler',page:'admin-tasks'},
+    ]
+  }
+};
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+function init(){
+  switchRole('visitor');
+  loadRoomsFromDB();
+  // Check if already logged in via PHP session
+  fetch('get_session.php').then(r=>r.json()).then(data=>{
+    if(data.logged_in){
+      isLoggedIn=true;
+      loggedInUser={role:data.user.role, name:data.user.name};
+      authCompleteLogin(data.user.role, data.user.name);
+    }
+  }).catch(()=>{});
+
+  // Keep database rooms data synced in the background every 3 seconds
+  setInterval(() => {
+    loadRoomsFromDB();
+  }, 3000);
+}
+
+function switchRole(role){
+  currentRole=role;
+  const r=roles[role];
+  document.getElementById('currentRoleBadge').className=`role-badge ${r.color}`;
+  document.getElementById('currentRoleBadge').textContent=r.label;
+  
+  const headerSignInBtn = document.getElementById('headerSignInBtn');
+  const userMenuWrap = document.getElementById('userMenuWrap');
+  if (role === 'visitor') {
+    if (headerSignInBtn) headerSignInBtn.style.display = 'inline-flex';
+    if (userMenuWrap) userMenuWrap.style.display = 'none';
+  } else {
+    if (headerSignInBtn) headerSignInBtn.style.display = 'none';
+    if (userMenuWrap) userMenuWrap.style.display = 'block';
+  }
+
+  let displayName = r.name;
+  let displayAvatar = r.avatar;
+
+  if (isLoggedIn && loggedInUser && role === loggedInUser.role) {
+    displayName = loggedInUser.name;
+    displayAvatar = displayName ? displayName.charAt(0).toUpperCase() : r.avatar;
+  }
+
+  document.getElementById('avatarBtn').textContent=displayAvatar;
+  document.getElementById('sidebarAvatar').textContent=displayAvatar;
+  document.getElementById('sidebarName').textContent=displayName;
+  document.getElementById('sidebarRole').textContent=r.label+' Account';
+  // Update dropdown
+  document.getElementById('ddUserName').textContent=displayName;
+  document.getElementById('ddUserRole').textContent=r.label+' Account';
+  
+  loadAllDataFromDB();
+  
+  renderSidebar();
+  navigate(r.menu[0].page);
+}
+
+function toggleSidebar(){
+  sidebarCollapsed=!sidebarCollapsed;
+  document.getElementById('sidebar').classList.toggle('collapsed',sidebarCollapsed);
+}
+
+function renderSidebar(){
+  const menu=roles[currentRole].menu;
+  document.getElementById('sidebarMenu').innerHTML=menu.map(m=>`
+    <div class="sidebar-item ${currentPage===m.page?'active':''}" onclick="navigate('${m.page}')">
+      <span class="icon">${m.icon}</span>
+      <span class="sidebar-label">${m.label}</span>
+    </div>
+  `).join('');
+}
+
+let chatPollInterval = null;
+
+async function loadChatFromDB() {
+  try {
+    const fd = new FormData();
+    fd.append('action', 'fetch_messages');
+    const res = await fetch('chat_api.php', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.success) {
+      if (data.messages && data.messages.length > 0) {
+        state.chatMessages = data.messages.map(m => {
+          let formattedTime = m.time;
+          const parts = m.time.split(':');
+          if (parts.length >= 2) {
+            let hours = parseInt(parts[0], 10);
+            const minutes = parts[1];
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            formattedTime = `${hours}:${minutes} ${ampm}`;
+          }
+          return {
+            from: m.type === 'customer' ? 'Guest' : 'Reception',
+            text: m.message,
+            time: formattedTime,
+            sent: m.type === 'customer'
+          };
+        });
+      } else {
+        state.chatMessages = [
+          {from:'Reception',text:'Welcome to Aurelia Grand! How can we assist you today?',time:'10:00 AM',sent:false}
+        ];
+      }
+      
+      const area = document.getElementById('chatArea');
+      if (area) {
+        const currentHtml = state.chatMessages.map(m => `
+          <div style="display:flex;flex-direction:column;align-items:${m.sent?'flex-end':'flex-start'}">
+            <div class="chat-bubble ${m.sent?'sent':'recv'}">${m.text}</div>
+            <p style="font-size:0.65rem;color:#8B949E;margin-top:4px">${m.time}</p>
+          </div>
+        `).join('');
+        if (area.innerHTML !== currentHtml) {
+          const isAtBottom = area.scrollHeight - area.scrollTop - area.clientHeight < 50;
+          area.innerHTML = currentHtml;
+          if (isAtBottom) {
+            area.scrollTop = area.scrollHeight;
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.error("Error fetching chat:", e);
+  }
+}
+
+function startChatPolling() {
+  loadChatFromDB().then(() => {
+    const area = document.getElementById('chatArea');
+    if (area) {
+      area.scrollTop = area.scrollHeight;
+    }
+  });
+  if (!chatPollInterval) {
+    chatPollInterval = setInterval(loadChatFromDB, 3000);
+  }
+}
+
+function stopChatPolling() {
+  if (chatPollInterval) {
+    clearInterval(chatPollInterval);
+    chatPollInterval = null;
+  }
+}
+
+function navigate(page){
+  if (currentPage === 'guest-chat' && page !== 'guest-chat') {
+    stopChatPolling();
+  }
+  
+  currentPage=page;
+  renderSidebar();
+  const parts=page.split('-');
+  document.getElementById('pageBreadcrumb').textContent=roles[currentRole].label+' → '+roles[currentRole].menu.find(m=>m.page===page)?.label;
+  const el=document.getElementById('mainContent');
+  el.innerHTML='<div class="fade-in">'+renderPage(page)+'</div>';
+  el.scrollTop=0;
+  
+  if (page === 'guest-chat') {
+    startChatPolling();
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// PAGE ROUTER
+// ═══════════════════════════════════════════════════
+function renderPage(page){
+  switch(page){
+    // VISITOR
+    case 'visitor-home': return pageVisitorHome();
+    case 'visitor-rooms': return pageVisitorRooms();
+    case 'visitor-reviews': return pageVisitorReviews();
+    case 'visitor-contact': return pageVisitorContact();
+    // GUEST
+    case 'guest-dashboard': return pageGuestDashboard();
+    case 'guest-rooms': return pageGuestRooms();
+    case 'guest-bookings': return pageGuestBookings();
+    case 'guest-roomservice': return pageGuestRoomService();
+    case 'guest-cleaning': return pageGuestCleaning();
+    case 'guest-invoices': return pageGuestInvoices();
+    case 'guest-chat': return pageGuestChat();
+    // STAFF
+    case 'staff-schedule': return pageStaffSchedule();
+    case 'staff-bookings': return pageStaffBookings();
+    case 'staff-orders': return pageStaffOrders();
+    case 'staff-cleaning': return pageStaffCleaning();
+    case 'staff-rooms': return pageStaffRooms();
+    // ADMIN
+    case 'admin-dashboard': return pageAdminDashboard();
+    case 'admin-rooms': return pageAdminRooms();
+    case 'admin-staff': return pageAdminStaff();
+    case 'admin-bookings': return pageAdminBookings();
+    case 'admin-reports': return pageAdminReports();
+    case 'admin-tasks': return pageAdminTasks();
+    default: return '<p class="text-slate">Page not found</p>';
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// VISITOR PAGES
+// ═══════════════════════════════════════════════════
+function pageVisitorHome(){return `
+<div class="visitor-hero rounded-xl p-10 mb-6 text-center" style="position:relative;min-height:280px;display:flex;flex-direction:column;justify-content:center;align-items:center">
+  <div style="position:relative;z-index:1">
+    <p style="font-size:0.7rem;letter-spacing:0.3em;text-transform:uppercase;color:#D4A853;margin-bottom:12px">Est. 1924 · Dhaka's Finest</p>
+    <h1 style="font-family:'Playfair Display',serif;font-size:3rem;color:#C9D1D9;line-height:1.1;margin-bottom:12px">Aurelia <em style="color:#D4A853">Grand</em></h1>
+    <p style="color:#8B949E;max-width:480px;font-size:0.88rem;line-height:1.7;margin-bottom:24px">A sanctuary of luxury in the heart of Dhaka. 124 curated rooms, world-class dining, and legendary hospitality since 1924.</p>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-gold" onclick="switchRole('guest');navigate('guest-rooms')">Browse Rooms</button>
+      <button class="btn btn-ghost" onclick="navigate('visitor-contact')">Contact Us</button>
+    </div>
+  </div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px">
+  ${[['124','Luxury Rooms'],['5★','Rating'],['24/7','Room Service'],['4','Restaurants']].map(([n,l])=>`
+  <div class="stat-card text-center"><div class="stat-num" style="font-size:2.2rem;color:#D4A853">${n}</div><div class="stat-label">${l}</div></div>`).join('')}
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+  <div class="card p-5">
+    <h3 style="font-family:'Playfair Display',serif;font-size:1.2rem;color:#C9D1D9;margin-bottom:12px;font-style:italic">Our Location</h3>
+    <div style="background:#21262D;border-radius:8px;height:160px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;border:1px solid #30363D">
+      <div style="text-align:center"><div style="font-size:2.5rem">📍</div><p style="color:#8B949E;font-size:0.82rem;margin-top:8px">1 Gulshan Avenue, Dhaka 1212</p></div>
+    </div>
+    <p style="color:#8B949E;font-size:0.8rem">📞 +880 2 8888 0000</p>
+    <p style="color:#8B949E;font-size:0.8rem;margin-top:4px">✉️ info@aureliagrand.com</p>
+  </div>
+  <div class="card p-5">
+    <h3 style="font-family:'Playfair Display',serif;font-size:1.2rem;color:#C9D1D9;margin-bottom:12px;font-style:italic">Recent Reviews</h3>
+    ${state.reviews.slice(0,3).map(r=>`
+    <div style="padding:10px 0;border-bottom:1px solid #21262D">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:0.82rem;color:#C9D1D9">${r.guest}</span>
+        <span style="color:#D4A853;font-size:0.78rem">${'★'.repeat(r.rating)}</span>
+      </div>
+      <p style="color:#8B949E;font-size:0.75rem;line-height:1.5;font-style:italic">"${r.comment.substring(0,80)}…"</p>
+    </div>`).join('')}
+    <button class="btn btn-ghost btn-sm" style="margin-top:10px;width:100%" onclick="navigate('visitor-reviews')">View All Reviews</button>
+  </div>
+</div>`;}
+
+function pageVisitorRooms(){
+  const avail=state.rooms.filter(r=>r.status==='available');
+  return `
+<div style="margin-bottom:20px"><h2 style="font-family:'Playfair Display',serif;font-size:1.6rem;color:#C9D1D9;font-style:italic">Available Rooms</h2><p style="color:#8B949E;font-size:0.82rem;margin-top:4px">${avail.length} rooms ready to book</p></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px">
+${avail.map(r=>`
+<div class="card card-hover" style="overflow:hidden;cursor:pointer">
+  <div style="height:160px;overflow:hidden"><img src="${r.img}" style="width:100%;height:100%;object-fit:cover;transition:transform 0.5s" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'"/></div>
+  <div style="padding:14px">
+    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px">
+      <div><p style="font-size:0.9rem;font-weight:600;color:#C9D1D9">Room ${r.id}</p><p style="font-size:0.75rem;color:#8B949E">${r.type} · Floor ${r.floor}</p></div>
+      <div style="text-align:right"><p style="font-family:'Playfair Display',serif;font-size:1.2rem;color:#D4A853">$${r.price}</p><p style="font-size:0.65rem;color:#8B949E">/night</p></div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px">${r.amenities.map(a=>`<span class="badge badge-gray">${a}</span>`).join('')}</div>
+    <p style="font-size:0.75rem;color:#8B949E;margin-bottom:10px">👥 Up to ${r.capacity} guests</p>
+    <button class="btn btn-gold" style="width:100%" onclick="switchRole('guest');navigate('guest-rooms')">Book Now</button>
+  </div>
+</div>`).join('')}
+</div>`;}
+
+function pageVisitorReviews(){return `
+<div style="margin-bottom:20px"><h2 style="font-family:'Playfair Display',serif;font-size:1.6rem;color:#C9D1D9;font-style:italic">Guest Reviews</h2></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+${state.reviews.map(r=>`
+<div class="card p-5">
+  <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+    <div><p style="font-size:0.88rem;font-weight:600;color:#C9D1D9">${r.guest}</p><p style="font-size:0.72rem;color:#8B949E">${r.date}</p></div>
+    <div style="color:#D4A853;font-size:0.9rem">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div>
+  </div>
+  <p style="color:#8B949E;font-size:0.83rem;line-height:1.7;font-style:italic">"${r.comment}"</p>
+</div>`).join('')}
+</div>
+<div class="card p-5" style="margin-top:16px">
+  <h3 style="font-size:1rem;color:#C9D1D9;margin-bottom:14px">Leave a Review</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+    <input class="inp" placeholder="Your name"/>
+    <select class="inp"><option>★★★★★ — Excellent</option><option>★★★★☆ — Very Good</option><option>★★★☆☆ — Good</option></select>
+  </div>
+  <textarea class="inp" rows="3" placeholder="Share your experience…" style="margin-bottom:10px"></textarea>
+  <button class="btn btn-gold" onclick="toast('Review submitted! Thank you.','green')">Submit Review</button>
+</div>`;}
+
+function pageVisitorContact(){return `
+<div style="margin-bottom:20px"><h2 style="font-family:'Playfair Display',serif;font-size:1.6rem;color:#C9D1D9;font-style:italic">Contact Us</h2></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+<div>
+  <div class="card p-6" style="margin-bottom:14px">
+    <h3 style="font-size:1rem;color:#C9D1D9;margin-bottom:16px">Send a Message</h3>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <input class="inp" id="contactName" placeholder="Full Name"/>
+      <input class="inp" id="contactEmail" placeholder="Email Address"/>
+      <input class="inp" id="contactSubject" placeholder="Subject"/>
+      <textarea class="inp" id="contactMessage" rows="4" placeholder="Your message…"></textarea>
+      <button class="btn btn-gold" onclick="submitContactMessage()">Send Message</button>
+    </div>
+  </div>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px">
+  ${[['📍','Address','1 Gulshan Avenue, Dhaka 1212, Bangladesh'],['📞','Phone','+880 2 8888 0000'],['✉️','Email','info@aureliagrand.com'],['🕐','Hours','Check-In: 3:00 PM | Check-Out: 12:00 PM'],['🚗','Airport','30 min from Hazrat Shahjalal International Airport']].map(([i,l,v])=>`
+  <div class="card p-4" style="display:flex;gap:12px;align-items:start">
+    <span style="font-size:1.3rem;flex-shrink:0">${i}</span>
+    <div><p style="font-size:0.78rem;color:#8B949E;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px">${l}</p><p style="font-size:0.85rem;color:#C9D1D9">${v}</p></div>
+  </div>`).join('')}
+</div>
+</div>`;}
+
+// ═══════════════════════════════════════════════════
+// GUEST PAGES
+// ═══════════════════════════════════════════════════
+function pageGuestDashboard(){
+  const guestName = (isLoggedIn && loggedInUser) ? loggedInUser.name : 'Alice Johnson';
+  const firstName = guestName.split(' ')[0];
+  const guestBooking = state.bookings.find(b => b.guest === guestName && b.status === 'confirmed') || state.bookings[0];
+  
+  const roomNum = guestBooking ? guestBooking.room : '102';
+  const roomType = guestBooking ? guestBooking.type : 'Deluxe Room';
+  const checkOutDate = guestBooking ? guestBooking.checkout : 'March 30, 2026';
+  const nightsLeft = guestBooking ? guestBooking.nights : 5;
+  const totalBill = guestBooking ? guestBooking.total : 750;
+  const bookingId = guestBooking ? guestBooking.id : 'BK001';
+  const checkInDate = guestBooking ? guestBooking.checkin : 'Mar 25, 2026';
+
+  const activeOrders = state.orders.filter(o => o.guest === guestName && o.status !== 'delivered');
+  const activeCleanings = state.cleaningRequests.filter(c => c.room === roomNum && c.status !== 'done');
+
+  return `
+<div style="margin-bottom:20px">
+  <h2 style="font-family:'Playfair Display',serif;font-size:1.6rem;color:#C9D1D9;font-style:italic">Welcome back, ${firstName} 👋</h2>
+  <p style="color:#8B949E;font-size:0.83rem">Room ${roomNum} · Check-out: ${checkOutDate}</p>
+</div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">
+  <div class="stat-card"><div class="stat-num">${nightsLeft}</div><div class="stat-label">Nights Left</div><div class="stat-trend trend-up">↑ Current Stay</div></div>
+  <div class="stat-card"><div class="stat-num" style="color:#D4A853">$${totalBill}</div><div class="stat-label">Total Bill</div><div class="stat-trend" style="color:#8B949E">${roomType}</div></div>
+  <div class="stat-card"><div class="stat-num" style="color:#3FB950">${activeOrders.length}</div><div class="stat-label">Active Orders</div><div class="stat-trend trend-up">↑ In Progress</div></div>
+  <div class="stat-card"><div class="stat-num" style="color:#58A6FF">${activeCleanings.length}</div><div class="stat-label">Cleaning Req</div><div class="stat-trend" style="color:#8B949E">Scheduled</div></div>
+</div>
+<div style="display:grid;grid-template-columns:1.5fr 1fr;gap:16px">
+  <div>
+    <div class="card p-5" style="margin-bottom:14px">
+      <h3 style="font-size:0.9rem;color:#C9D1D9;margin-bottom:14px;display:flex;align-items:center;gap:8px">🛎️ Recent Room Service Orders</h3>
+      ${state.orders.filter(o=>o.guest===guestName).map(o=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #21262D">
+        <div><p style="font-size:0.83rem;color:#C9D1D9">${o.items}</p><p style="font-size:0.72rem;color:#8B949E">${o.time}</p></div>
+        <div style="text-align:right"><p style="font-size:0.83rem;color:#D4A853">$${o.total}</p><span class="badge ${o.status==='delivered'?'badge-green':o.status==='preparing'?'badge-yellow':'badge-blue'}">${o.status}</span></div>
+      </div>`).join('')}
+      ${state.orders.filter(o=>o.guest===guestName).length === 0 ? '<p style="color:#8B949E;font-size:0.78rem;text-align:center;padding:20px 0">No recent orders.</p>' : ''}
+      <button class="btn btn-ghost btn-sm" style="margin-top:10px;width:100%" onclick="navigate('guest-roomservice')">Order Room Service →</button>
+    </div>
+    <div class="card p-5">
+      <h3 style="font-size:0.9rem;color:#C9D1D9;margin-bottom:14px">⚡ Quick Actions</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <button class="btn btn-ghost" style="justify-content:flex-start" onclick="navigate('guest-roomservice')">🍽️ Order Food</button>
+        <button class="btn btn-ghost" style="justify-content:flex-start" onclick="navigate('guest-cleaning')">🧹 Request Cleaning</button>
+        <button class="btn btn-ghost" style="justify-content:flex-start" onclick="navigate('guest-chat')">💬 Chat Reception</button>
+        <button class="btn btn-ghost" style="justify-content:flex-start" onclick="navigate('guest-invoices')">📄 View Invoice</button>
+      </div>
+    </div>
+  </div>
+  <div>
+    <div class="card p-5" style="margin-bottom:14px">
+      <h3 style="font-size:0.9rem;color:#C9D1D9;margin-bottom:14px">📋 My Booking</h3>
+      <div class="gold-line-left" style="margin-bottom:12px">
+        <p style="font-size:0.75rem;color:#8B949E">Confirmation</p>
+        <p style="font-size:0.88rem;color:#D4A853;font-weight:600">${bookingId}</p>
+      </div>
+      ${[['Room', `${roomNum} — ${roomType}`],['Check-In',checkInDate],['Check-Out',checkOutDate],['Guests','2 Adults'],['Total','$'+totalBill]].map(([k,v])=>`
+      <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(33,38,45,0.5)">
+        <span style="font-size:0.75rem;color:#8B949E">${k}</span><span style="font-size:0.8rem;color:#C9D1D9">${v}</span>
+      </div>`).join('')}
+      <button class="btn btn-ghost btn-sm" style="margin-top:12px;width:100%" onclick="navigate('guest-invoices')">📄 Download Invoice</button>
+    </div>
+    <div class="card p-5">
+      <h3 style="font-size:0.9rem;color:#C9D1D9;margin-bottom:12px">🌤️ Today at Aurelia</h3>
+      ${[['Le Jardin','Open · 6 PM – 11 PM'],['Spa & Wellness','Open · 7 AM – 10 PM'],['Infinity Pool','Open · 6 AM – 9 PM'],['Fitness Center','Open · 24 Hours']].map(([n,s])=>`
+      <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(33,38,45,0.5)">
+        <span style="font-size:0.78rem;color:#C9D1D9">${n}</span><span style="font-size:0.72rem;color:#3FB950">${s}</span>
+      </div>`).join('')}
+    </div>
+  </div>
+</div>`;}
+
+function pageGuestRooms(){
+  const avail=state.rooms.filter(r=>r.status==='available');
+  return `
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+  <div><h2 style="font-family:'Playfair Display',serif;font-size:1.6rem;color:#C9D1D9;font-style:italic">Browse Rooms</h2><p style="color:#8B949E;font-size:0.82rem">${avail.length} rooms available</p></div>
+  <div style="display:flex;gap:8px">
+    <select class="inp" style="width:auto;padding:7px 10px">
+      <option>All Types</option><option>Deluxe</option><option>Superior</option><option>Junior Suite</option><option>Grand Suite</option><option>Presidential</option>
+    </select>
+    <select class="inp" style="width:auto;padding:7px 10px">
+      <option>Sort: Price Low</option><option>Sort: Price High</option>
+    </select>
+  </div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px">
+${avail.map(r=>`
+<div class="card card-hover" style="overflow:hidden">
+  <div style="height:160px;overflow:hidden;position:relative">
+    <img src="${r.img}" style="width:100%;height:100%;object-fit:cover;transition:transform 0.5s" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'"/>
+    <span class="badge badge-green" style="position:absolute;top:10px;right:10px">Available</span>
+  </div>
+  <div style="padding:14px">
+    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px">
+      <div><p style="font-size:0.95rem;font-weight:600;color:#C9D1D9">Room ${r.id} — ${r.type}</p><p style="font-size:0.75rem;color:#8B949E">Floor ${r.floor} · ${r.capacity} Guests</p></div>
+      <div style="text-align:right"><p style="font-family:'Playfair Display',serif;font-size:1.3rem;color:#D4A853">$${r.price}</p><p style="font-size:0.65rem;color:#8B949E">/night</p></div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px">${r.amenities.slice(0,4).map(a=>`<span class="badge badge-gray">${a}</span>`).join('')}</div>
+    <button class="btn btn-gold" style="width:100%" onclick="openBookingModal('${r.id}','${r.type}',${r.price})">Book This Room</button>
+  </div>
+</div>`).join('')}
+</div>`;}
+
+function pageGuestBookings(){
+  const guestName = (isLoggedIn && loggedInUser) ? loggedInUser.name : 'Alice Johnson';
+  const bookingsFiltered = state.bookings.filter(b=>b.guest===guestName);
+  return `
+<div style="margin-bottom:20px"><h2 style="font-family:'Playfair Display',serif;font-size:1.6rem;color:#C9D1D9;font-style:italic">My Bookings</h2></div>
+<div style="display:flex;flex-direction:column;gap:14px">
+${bookingsFiltered.length > 0 ? bookingsFiltered.map(b=>`
+<div class="card p-5">
+  <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:14px">
+    <div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+        <p style="font-size:0.95rem;font-weight:600;color:#C9D1D9">${b.id}</p>
+        <span class="badge ${getBookingStatusBadgeClass(b.status)}">${b.status}</span>
+      </div>
+      <p style="font-size:0.82rem;color:#8B949E">Room ${b.room} — ${b.type}</p>
+    </div>
+    <p style="font-family:'Playfair Display',serif;font-size:1.4rem;color:#D4A853">$${b.total}</p>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
+    ${[['Check-In',b.checkin],['Check-Out',b.checkout],['Nights',b.nights],['Room',b.room]].map(([k,v])=>`
+    <div style="background:#21262D;border-radius:6px;padding:8px 10px"><p style="font-size:0.65rem;color:#8B949E;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px">${k}</p><p style="font-size:0.82rem;color:#C9D1D9">${v}</p></div>`).join('')}
+  </div>
+  <div style="display:flex;gap:8px">
+    <button class="btn btn-ghost btn-sm" onclick="navigate('guest-invoices')">📄 Invoice</button>
+    ${(b.status==='pending'||b.status==='approved')?`<button class="btn btn-danger btn-sm" onclick="toast('Booking cancelled.','red')">Cancel</button>`:''}
+  </div>
+</div>`).join('') : '<div class="card p-8 text-center"><p style="color:#8B949E">You do not have any bookings yet.</p></div>'}
+</div>`;}
+
+function pageGuestRoomService(){
+  const guestName = (isLoggedIn && loggedInUser) ? loggedInUser.name : 'Alice Johnson';
+  const guestBooking = state.bookings.find(b => b.guest === guestName && b.status === 'confirmed') || state.bookings[0];
+  const roomNum = guestBooking ? guestBooking.room : '102';
+  
+  const menuItems=[
+    {cat:'🍽️ Food',items:[
+      {n:'Club Sandwich',d:'Chicken, bacon, avocado, sourdough',p:18},
+      {n:'Wagyu Burger',d:'200g wagyu patty, truffle aioli, aged cheddar',p:32},
+      {n:'Caesar Salad',d:'Romaine, parmesan, house-made dressing',p:16},
+      {n:'Pasta Carbonara',d:'Linguine, guanciale, egg yolk, pecorino',p:24},
+      {n:'Chocolate Fondant',d:'Warm lava cake, vanilla ice cream',p:14},
+    ]},
+    {cat:'🥂 Beverages',items:[
+      {n:'Nespresso Selection',d:'Espresso, Lungo, Americano, Cappuccino',p:6},
+      {n:'Fresh Juice',d:'Orange, Watermelon, Mango',p:9},
+      {n:'Moët & Chandon',d:'Impérial Brut Champagne, 750ml',p:95},
+      {n:'Craft Beer',d:'Rotating local & imported craft beers',p:12},
+    ]},
+    {cat:'🛏️ Amenities',items:[
+      {n:'Extra Pillows & Blanket',d:'Egyptian cotton, hypoallergenic',p:0},
+      {n:'Toiletry Kit',d:'Aesop products, razor, dental kit',p:0},
+      {n:'Iron & Ironing Board',d:'Delivered within 15 minutes',p:0},
+      {n:'Turndown Service',d:'Chocolates, rose petals, evening prep',p:15},
+    ]},
+  ];
+  return `
+<div style="margin-bottom:20px"><h2 style="font-family:'Playfair Display',serif;font-size:1.6rem;color:#C9D1D9;font-style:italic">Room Service</h2><p style="color:#8B949E;font-size:0.82rem">Room ${roomNum} · Est. 25–35 min delivery</p></div>
+<div style="display:grid;grid-template-columns:1.6fr 1fr;gap:16px">
+<div>
+${menuItems.map(cat=>`
+<div class="card p-5" style="margin-bottom:14px">
+  <h3 style="font-size:0.88rem;color:#C9D1D9;margin-bottom:12px">${cat.cat}</h3>
+  ${cat.items.map(item=>`
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #21262D">
+    <div style="flex:1"><p style="font-size:0.85rem;color:#C9D1D9">${item.n}</p><p style="font-size:0.72rem;color:#8B949E">${item.d}</p></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-left:12px">
+      <span style="font-size:0.85rem;color:#D4A853;min-width:40px;text-align:right">${item.p>0?'$'+item.p:'Free'}</span>
+      <button class="btn btn-gold btn-sm" onclick="addToCart('${item.n}',${item.p})">+</button>
+    </div>
+  </div>`).join('')}
+</div>`).join('')}
+</div>
+<div>
+  <div class="card p-5" style="position:sticky;top:0">
+    <h3 style="font-size:0.9rem;color:#C9D1D9;margin-bottom:4px">🛒 Your Order</h3>
+    <p style="font-size:0.72rem;color:#8B949E;margin-bottom:14px">Room ${roomNum}</p>
+    <div id="cartItems" style="min-height:80px;margin-bottom:12px">
+      <p id="emptyCartMsg" style="color:#8B949E;font-size:0.78rem;text-align:center;padding:20px 0">Cart is empty</p>
+    </div>
+    <div style="border-top:1px solid #21262D;padding-top:12px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:0.78rem;color:#8B949E">Subtotal</span><span id="cartSub" style="font-size:0.78rem;color:#C9D1D9">$0.00</span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:10px"><span style="font-size:0.78rem;color:#8B949E">Service (10%)</span><span id="cartSvc" style="font-size:0.78rem;color:#C9D1D9">$0.00</span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:14px"><span style="font-size:0.85rem;color:#C9D1D9;font-weight:600">Total</span><span id="cartTot" style="font-family:'Playfair Display',serif;font-size:1.2rem;color:#D4A853">$0.00</span></div>
+      <textarea id="orderNotes" class="inp" rows="2" placeholder="Special instructions…" style="margin-bottom:10px"></textarea>
+      <button class="btn btn-gold" style="width:100%" onclick="placeOrder()">Place Order</button>
+      <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:6px" onclick="clearCart()">Clear Cart</button>
+    </div>
+  </div>
+</div>
+</div>`;
+}
+
+function pageGuestCleaning(){
+  const guestName = (isLoggedIn && loggedInUser) ? loggedInUser.name : 'Alice Johnson';
+  const guestBooking = state.bookings.find(b => b.guest === guestName && b.status === 'confirmed') || state.bookings[0];
+  const roomNum = guestBooking ? guestBooking.room : '102';
+  return `
+<div style="margin-bottom:20px"><h2 style="font-family:'Playfair Display',serif;font-size:1.6rem;color:#C9D1D9;font-style:italic">Request Cleaning</h2></div>
+<div style="display:grid;grid-template-columns:1.2fr 1fr;gap:16px">
+<div>
+  <div class="card p-6" style="margin-bottom:14px">
+    <h3 style="font-size:0.9rem;color:#C9D1D9;margin-bottom:16px">🧹 New Cleaning Request</h3>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div><label style="font-size:0.72rem;color:#8B949E;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.06em">Request Type</label>
+        <select id="cleaningType" class="inp"><option>Full Room Cleaning</option><option>Linen Change Only</option><option>Bathroom Cleaning</option><option>Turndown Service</option><option>Express Clean (15 min)</option></select></div>
+      <div><label style="font-size:0.72rem;color:#8B949E;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.06em">Preferred Time</label>
+        <select id="cleaningTime" class="inp"><option>As Soon As Possible</option><option>Morning (8–12)</option><option>Afternoon (12–5)</option><option>Evening (5–9)</option></select></div>
+      <div><label style="font-size:0.72rem;color:#8B949E;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.06em">Priority</label>
+        <select id="cleaningPriority" class="inp"><option>Normal</option><option>High — Urgent</option></select></div>
+      <div><label style="font-size:0.72rem;color:#8B949E;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.06em">Additional Notes</label>
+        <textarea id="cleaningNotes" class="inp" rows="3" placeholder="Any specific instructions…"></textarea></div>
+      <button class="btn btn-gold" onclick="submitCleaningRequest()">Submit Request</button>
+    </div>
+  </div>
+</div>
+<div>
+  <div class="card p-5">
+    <h3 style="font-size:0.9rem;color:#C9D1D9;margin-bottom:14px">📋 My Cleaning History</h3>
+    ${state.cleaningRequests.filter(c=>c.requestedBy===guestName||c.room===roomNum).map(c=>`
+    <div style="padding:10px;background:#21262D;border-radius:6px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:0.82rem;color:#C9D1D9">${c.id}</span>
+        <span class="badge ${c.status==='done'?'badge-green':c.status==='in-progress'?'badge-yellow':'badge-blue'}">${c.status}</span>
+      </div>
+      <p style="font-size:0.72rem;color:#8B949E">Room ${c.room} · ${c.time}</p>
+      <p style="font-size:0.72rem;color:#8B949E">Assigned: ${c.assignedTo}</p>
+    </div>`).join('')}
+  </div>
+</div>
+</div>`;}
+
+function pageGuestInvoices(){
+  const guestName = (isLoggedIn && loggedInUser) ? loggedInUser.name : 'Alice Johnson';
+  const emailName = guestName.toLowerCase().replace(/\s+/g, '') + '@example.com';
+  const guestBooking = state.bookings.find(b => b.guest === guestName && b.status === 'confirmed') || state.bookings[0];
+  
+  const roomNum = guestBooking ? guestBooking.room : '102';
+  const bookingId = guestBooking ? guestBooking.id : 'BK001';
+  const roomType = guestBooking ? guestBooking.type : 'Deluxe';
+  const checkInDate = guestBooking ? guestBooking.checkin : 'March 25';
+  const checkOutDate = guestBooking ? guestBooking.checkout : 'March 30, 2026';
+  const nights = guestBooking ? guestBooking.nights : 5;
+  const rate = guestBooking ? (guestBooking.total / guestBooking.nights) : 150;
+  const roomTotal = guestBooking ? guestBooking.total : 750;
+
+  // Filter orders for this guest
+  const orders = state.orders.filter(o => o.guest === guestName);
+  const ordersTotal = orders.reduce((sum, o) => sum + o.total, 0);
+  const subtotal = roomTotal + ordersTotal;
+  const tax = subtotal * 0.05;
+  const grandTotal = subtotal + tax;
+
+  return `
+<div style="margin-bottom:20px"><h2 style="font-family:'Playfair Display',serif;font-size:1.6rem;color:#C9D1D9;font-style:italic">My Invoices</h2></div>
+<div class="card p-0" style="margin-bottom:16px" id="invoiceCard">
+  <div style="padding:20px;border-bottom:1px solid #21262D;display:flex;justify-content:space-between;align-items:center">
+    <div>
+      <p style="font-family:'Playfair Display',serif;font-size:1.2rem;color:#D4A853;font-style:italic">Invoice #INV-2026-001</p>
+      <p style="font-size:0.78rem;color:#8B949E;margin-top:2px">Booking ${bookingId} · ${checkInDate}–${checkOutDate}</p>
+    </div>
+    <span class="badge badge-green">Paid</span>
+  </div>
+  <div style="padding:20px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+      <div><p style="font-size:0.72rem;color:#8B949E;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">Bill To</p><p style="font-size:0.88rem;color:#C9D1D9">${guestName}</p><p style="font-size:0.78rem;color:#8B949E">${emailName}</p></div>
+      <div><p style="font-size:0.72rem;color:#8B949E;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">Hotel</p><p style="font-size:0.88rem;color:#C9D1D9">Aurelia Grand</p><p style="font-size:0.78rem;color:#8B949E">1 Gulshan Ave, Dhaka</p></div>
+    </div>
+    <table class="tbl" style="margin-bottom:16px">
+      <thead><tr><th>Description</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead>
+      <tbody>
+        <tr><td>${roomType} Room (Room ${roomNum})</td><td>${nights} nights</td><td>$${rate.toFixed(2)}/night</td><td>$${roomTotal.toFixed(2)}</td></tr>
+        ${orders.map(o => `
+        <tr><td>${o.items}</td><td>1</td><td>$${o.total.toFixed(2)}</td><td>$${o.total.toFixed(2)}</td></tr>
+        `).join('')}
+      </tbody>
+    </table>
+    <div style="max-width:250px;margin-left:auto">
+      <div style="display:flex;justify-content:space-between;padding:6px 0"><span style="font-size:0.78rem;color:#8B949E">Subtotal</span><span style="font-size:0.82rem;color:#C9D1D9">$${subtotal.toFixed(2)}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:6px 0"><span style="font-size:0.78rem;color:#8B949E">Tax (5%)</span><span style="font-size:0.82rem;color:#C9D1D9">$${tax.toFixed(2)}</span></div>
+      <div style="display:flex;justify-content:space-between;padding:10px 0;border-top:1px solid #30363D"><span style="font-size:0.9rem;color:#C9D1D9;font-weight:600">Total</span><span style="font-family:'Playfair Display',serif;font-size:1.3rem;color:#D4A853">$${grandTotal.toFixed(2)}</span></div>
+    </div>
+  </div>
+  <div style="padding:14px 20px;border-top:1px solid #21262D;display:flex;gap:8px" class="no-print">
+    <button class="btn btn-gold" onclick="downloadBookingInvoicePDF(${guestBooking ? guestBooking._db_id : 1})">📄 Download PDF</button>
+    <button class="btn btn-ghost" onclick="toast('Invoice sent to ${emailName}','gold')">📧 Email Invoice</button>
+  </div>
+</div>`;}
+
+function pageGuestChat(){
+  return `
+<div style="margin-bottom:20px"><h2 style="font-family:'Playfair Display',serif;font-size:1.6rem;color:#C9D1D9;font-style:italic">Chat with Reception</h2><p style="color:#8B949E;font-size:0.82rem">Connected to Fatima Haque (Receptionist)</p></div>
+<div class="card" style="display:flex;flex-direction:column;height:calc(100vh - 200px)">
+  <div style="padding:12px 14px;border-bottom:1px solid #21262D;display:flex;align-items:center;gap:10px">
+    <div style="width:32px;height:32px;border-radius:50%;background:#21262D;display:flex;align-items:center;justify-content:center;font-size:0.85rem">F</div>
+    <div><p style="font-size:0.85rem;color:#C9D1D9">Fatima Haque</p><p style="font-size:0.72rem;color:#3FB950">● Online</p></div>
+  </div>
+  <div id="chatArea" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px">
+    ${state.chatMessages.map(m=>`
+    <div style="display:flex;flex-direction:column;align-items:${m.sent?'flex-end':'flex-start'}">
+      <div class="chat-bubble ${m.sent?'sent':'recv'}">${m.text}</div>
+      <p style="font-size:0.65rem;color:#8B949E;margin-top:4px">${m.time}</p>
+    </div>`).join('')}
+  </div>
+  <div style="padding:12px;border-top:1px solid #21262D;display:flex;gap:8px">
+    <input id="chatInput" class="inp" placeholder="Type a message…" onkeydown="if(event.key==='Enter')sendChat()"/>
+    <button class="btn btn-gold" onclick="sendChat()">Send</button>
+  </div>
+</div>`;
+}
+
+// ═══════════════════════════════════════════════════
+// STAFF PAGES
+// ═══════════════════════════════════════════════════
+function pageStaffSchedule(){return `
+<div style="margin-bottom:20px"><h2 style="font-family:'Playfair Display',serif;font-size:1.6rem;color:#C9D1D9;font-style:italic">My Schedule</h2><p style="color:#8B949E;font-size:0.82rem">James Kho · Room Service · Today, March 28 2026</p></div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
+  <div class="stat-card"><div class="stat-num" style="color:#D4A853">${state.staffTasks.filter(t=>t.status!=='Done').length}</div><div class="stat-label">Active Tasks</div></div>
+  <div class="stat-card"><div class="stat-num" style="color:#3FB950">12:00</div><div class="stat-label">Shift Start</div></div>
+  <div class="stat-card"><div class="stat-num" style="color:#58A6FF">20:00</div><div class="stat-label">Shift End</div></div>
+</div>
+<div class="card p-0" style="margin-bottom:16px">
+  <div style="padding:14px 16px;border-bottom:1px solid #21262D"><h3 style="font-size:0.88rem;color:#C9D1D9">📅 Today's Tasks</h3></div>
+  <table class="tbl">
+    <thead><tr><th>Time</th><th>Task</th><th>Room</th><th>Priority</th><th>Status</th><th>Action</th></tr></thead>
+    <tbody>
+      ${state.staffTasks.map(t => {
+        let statusBadge = '';
+        let actionBtn = '';
+        
+        if (t.status === 'Pending') {
+          statusBadge = '<span class="badge badge-blue">Pending</span>';
+          actionBtn = `<button class="btn btn-blue btn-sm" onclick="startStaffTask(${t.id})">▶ Start</button>`;
+        } else if (t.status === 'In Progress') {
+          statusBadge = '<span class="badge badge-yellow">In Progress</span>';
+          actionBtn = `<button class="btn btn-success btn-sm" onclick="completeStaffTask(${t.id})">✓ Done</button>`;
+        } else {
+          statusBadge = '<span class="badge badge-green">Completed</span>';
+          actionBtn = '<span style="color:#3FB950;font-size:0.78rem">✓ Done</span>';
+        }
+        
+        const priorityBadge = t.priority === 'High' ? '<span class="badge badge-yellow">High</span>' : '<span class="badge badge-gray">Normal</span>';
+        const timeColor = t.status === 'Done' ? '#8B949E' : '#D4A853';
+        
+        return `
+          <tr>
+            <td style="color:${timeColor}">${t.time}</td>
+            <td>${t.task}</td>
+            <td>${t.room}</td>
+            <td>${priorityBadge}</td>
+            <td>${statusBadge}</td>
+            <td>${actionBtn}</td>
+          </tr>
+        `;
+      }).join('')}
+    </tbody>
+  </table>
+</div>`;}
+
+function pageStaffBookings(){return `
+<div style="margin-bottom:20px"><h2 style="font-family:'Playfair Display',serif;font-size:1.6rem;color:#C9D1D9;font-style:italic">Manage Bookings</h2></div>
+<div class="card p-0">
+  <div style="padding:12px 16px;border-bottom:1px solid #21262D;display:flex;gap:8px">
+    <div class="search-bar" style="flex:1"><span style="color:#8B949E">🔍</span><input placeholder="Search bookings…"/></div>
+    <select class="inp" style="width:auto;padding:7px 10px"><option>All Status</option><option>Confirmed</option><option>Approved</option><option>Pending</option><option>Cancelled</option></select>
+  </div>
+  <table class="tbl">
+    <thead><tr><th>ID</th><th>Guest</th><th>Room</th><th>Check-In</th><th>Check-Out</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>
+    ${state.bookings.map(b=>`
+    <tr>
+      <td style="color:#D4A853">${b.id}</td>
+      <td>${b.guest}</td>
+      <td>Room ${b.room} — ${b.type}</td>
+      <td>${b.checkin}</td>
+      <td>${b.checkout}</td>
+      <td><span class="badge ${getBookingStatusBadgeClass(b.status)}">${b.status}</span></td>
+      <td style="display:flex;gap:6px">
+        ${b.status==='pending'?`<button class="btn btn-success btn-sm" onclick="staffUpdateBookingStatus(${b._db_id}, 'approved')">Approve</button><button class="btn btn-danger btn-sm" onclick="staffUpdateBookingStatus(${b._db_id}, 'cancelled')">Reject</button>`: b.status==='approved'?`<span style="color:#58A6FF;font-size:0.78rem;font-weight:600">Pending Admin</span>`:'<span style="color:#8B949E;font-size:0.78rem">Managed</span>'}
+      </td>
+    </tr>`).join('')}
+    </tbody>
+  </table>
+</div>`;}
+
+function pageStaffOrders(){return `
+<div style="margin-bottom:20px"><h2 style="font-family:'Playfair Display',serif;font-size:1.6rem;color:#C9D1D9;font-style:italic">Room Service Orders</h2></div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
+  <div class="stat-card"><div class="stat-num" style="color:#D4A853">3</div><div class="stat-label">Active Orders</div></div>
+  <div class="stat-card"><div class="stat-num" style="color:#3FB950">1</div><div class="stat-label">Delivered Today</div></div>
+  <div class="stat-card"><div class="stat-num" style="color:#58A6FF">1</div><div class="stat-label">Preparing</div></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px">
+${state.orders.map(o=>`
+<div class="card p-5">
+  <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px">
+    <div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+        <p style="font-size:0.9rem;font-weight:600;color:#C9D1D9">${o.id}</p>
+        <span class="badge ${o.status==='delivered'?'badge-green':o.status==='preparing'?'badge-yellow':'badge-blue'}">${o.status}</span>
+      </div>
+      <p style="font-size:0.78rem;color:#8B949E">Room ${o.room} · ${o.guest} · ${o.time}</p>
+    </div>
+    <p style="font-family:'Playfair Display',serif;font-size:1.2rem;color:#D4A853">$${o.total}</p>
+  </div>
+  <p style="font-size:0.82rem;color:#C9D1D9;background:#21262D;padding:10px;border-radius:6px;margin-bottom:12px">${o.items}</p>
+  <div style="display:flex;gap:8px">
+    ${o.status==='pending'?`<button class="btn btn-blue btn-sm" onclick="staffUpdateOrderStatus(${o._db_id}, 'preparing')">🍳 Start Preparing</button>`:''}
+    ${o.status==='preparing'?`<button class="btn btn-gold btn-sm" onclick="staffUpdateOrderStatus(${o._db_id}, 'delivered')">🚚 Mark Delivered</button>`:''}
+    ${o.status==='delivered'?`<span style="color:#3FB950;font-size:0.78rem">✓ Completed</span>`:''}
+  </div>
+</div>`).join('')}
+</div>`;}
+
+function pageStaffCleaning(){return `
+<div style="margin-bottom:20px"><h2 style="font-family:'Playfair Display',serif;font-size:1.6rem;color:#C9D1D9;font-style:italic">Cleaning Requests</h2></div>
+<div style="display:flex;flex-direction:column;gap:12px">
+${state.cleaningRequests.map(c=>{
+  let statusText = c.status;
+  let badgeClass = 'badge-blue';
+  let actionBtn = '';
+  
+  if (c.status === 'in-progress') {
+    statusText = 'cleaning ongoing';
+    badgeClass = 'badge-yellow';
+    actionBtn = `<button class="btn btn-success btn-sm" onclick="staffUpdateCleaningStatus(${c._db_id}, 'done')">✓ Done</button>`;
+  } else if (c.status === 'done') {
+    statusText = 'completed';
+    badgeClass = 'badge-green';
+    actionBtn = '<span style="color:#3FB950;font-size:0.78rem">✓ Completed</span>';
+  } else {
+    statusText = 'pending';
+    badgeClass = 'badge-blue';
+    actionBtn = `<button class="btn btn-blue btn-sm" onclick="staffUpdateCleaningStatus(${c._db_id}, 'in-progress')">Assign to Me</button>`;
+  }
+  
+  return `
+<div class="card p-5">
+  <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <p style="font-size:0.9rem;font-weight:600;color:#C9D1D9">${c.id}</p>
+          <span class="badge ${c.priority==='high'?'badge-red':'badge-gray'}">${c.priority}</span>
+          <span class="badge ${badgeClass}">${statusText}</span>
+        </div>
+        <p style="font-size:0.78rem;color:#8B949E">Room ${c.room} · Requested by ${c.requestedBy} · ${c.time}</p>
+        <p style="font-size:0.78rem;color:#8B949E;margin-top:2px">Assigned: ${c.assignedTo}</p>
+      </div>
+    </div>
+    <div style="display:flex;gap:6px">
+      ${actionBtn}
+    </div>
+  </div>
+</div>`;
+}).join('')}
+</div>`;}
+
+function pageStaffRooms(){return `
+<div style="margin-bottom:20px;display:flex;justify-content:space-between;align-items:center">
+  <div><h2 style="font-family:'Playfair Display',serif;font-size:1.6rem;color:#C9D1D9;font-style:italic">Room Status</h2></div>
+  <div style="display:flex;gap:8px;font-size:0.72rem">
+    ${[['available','badge-green'],['occupied','badge-red'],['cleaning','badge-yellow'],['maintenance','badge-gray']].map(([s,b])=>`<span class="badge ${b}">${s}</span>`).join('')}
+  </div>
+</div>
+<div class="room-grid">
+${state.rooms.map(r=>`
+<div class="room-tile ${r.status}" onclick="toggleRoomStatus('${r.id}')">
+  <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px">
+    <p style="font-size:1rem;font-weight:700;color:#C9D1D9">${r.id}</p>
+    <span class="badge ${r.status==='available'?'badge-green':r.status==='occupied'?'badge-red':r.status==='cleaning'?'badge-yellow':'badge-gray'}">${r.status}</span>
+  </div>
+  <p style="font-size:0.75rem;color:#8B949E;margin-bottom:4px">${r.type}</p>
+  <p style="font-size:0.72rem;color:#8B949E">Floor ${r.floor}</p>
+  ${r.guest?`<p style="font-size:0.72rem;color:#D4A853;margin-top:6px">👤 ${r.guest}</p>`:''}
+  <div style="margin-top:8px;font-size:0.7rem;color:#8B949E">Click to change status</div>
+</div>`).join('')}
+</div>`;}
+
+function pageAdminDashboard(){
+  const adminActions = [
+    ...state.bookings.filter(b => b.status === 'approved').map(b => [
+      `${b.id} — ${b.guest} needs confirmation`,
+      'badge-blue',
+      'approved',
+      'Confirm',
+      `staffUpdateBookingStatus(${b._db_id}, 'confirmed')`
+    ]),
+    ['Room 401 — Maintenance scheduled','badge-gray','maintenance','View',`navigate('admin-rooms')`],
+    ['Staff schedule for next week','badge-blue','due','Setup',`navigate('admin-tasks')`],
+  ];
+  return `
+<div style="margin-bottom:20px"><h2 style="font-family:'Playfair Display',serif;font-size:1.6rem;color:#C9D1D9;font-style:italic">Admin Dashboard</h2><p style="color:#8B949E;font-size:0.82rem">Overview · March 28, 2026</p></div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">
+  <div class="stat-card"><div class="stat-num" style="color:#D4A853">$14,280</div><div class="stat-label">Monthly Revenue</div><div class="stat-trend trend-up">↑ 12% vs last month</div></div>
+  <div class="stat-card"><div class="stat-num">${state.bookings.filter(b=>b.status==='confirmed').length}</div><div class="stat-label">Active Bookings</div><div class="stat-trend trend-up">↑ 3 new today</div></div>
+  <div class="stat-card"><div class="stat-num" style="color:#3FB950">${state.rooms.filter(r=>r.status==='available').length}</div><div class="stat-label">Available Rooms</div><div class="stat-trend trend-down">↓ 2 occupied more</div></div>
+  <div class="stat-card"><div class="stat-num" style="color:#58A6FF">${state.staff.filter(s=>s.status==='on-duty').length}</div><div class="stat-label">Staff On Duty</div><div class="stat-trend" style="color:#8B949E">of ${state.staff.length} total</div></div>
+</div>
+<div style="display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:16px">
+  <div class="card p-5">
+    <h3 style="font-size:0.88rem;color:#C9D1D9;margin-bottom:4px">📊 Occupancy by Room Type</h3>
+    <p style="font-size:0.72rem;color:#8B949E;margin-bottom:14px">Current month</p>
+    ${[['Deluxe','2/2','100%','badge-green'],['Superior','1/2','50%','badge-yellow'],['Junior Suite','1/2','50%','badge-yellow'],['Grand Suite','0/1','0%','badge-gray'],['Presidential','0/1','0%','badge-gray']].map(([t,c,p,b])=>`
+    <div style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:0.78rem;color:#C9D1D9">${t}</span><span style="font-size:0.78rem;color:#8B949E">${c} · <span class="badge ${b}" style="font-size:0.6rem">${p}</span></span></div>
+      <div class="progress-wrap"><div class="progress-bar" style="width:${p}"></div></div>
+    </div>`).join('')}
+  </div>
+  <div class="card p-5">
+    <h3 style="font-size:0.88rem;color:#C9D1D9;margin-bottom:14px">⚡ Pending Actions</h3>
+    ${adminActions.map(([t,b,s,btn,fn])=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #21262D">
+      <div><p style="font-size:0.8rem;color:#C9D1D9">${t}</p><span class="badge ${b}">${s}</span></div>
+      <button class="btn btn-ghost btn-sm" onclick="${fn}">${btn}</button>
+    </div>`).join('')}
+  </div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+  <div class="card p-5">
+    <h3 style="font-size:0.88rem;color:#C9D1D9;margin-bottom:14px">👥 Staff Overview</h3>
+    ${state.staff.map(s=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(33,38,45,0.5)">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:28px;height:28px;border-radius:50%;background:#21262D;display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:#D4A853">${s.name[0]}</div>
+        <div><p style="font-size:0.8rem;color:#C9D1D9">${s.name}</p><p style="font-size:0.7rem;color:#8B949E">${s.role}</p></div>
+      </div>
+      <div style="text-align:right">
+        <span class="badge ${s.status==='on-duty'?'badge-green':'badge-gray'}">${s.status}</span>
+        <p style="font-size:0.7rem;color:#8B949E;margin-top:2px">${getStaffActiveTasksCount(s._db_id)} tasks</p>
+      </div>
+    </div>`).join('')}
+  </div>
+  <div class="card p-5">
+    <h3 style="font-size:0.88rem;color:#C9D1D9;margin-bottom:14px">🛎️ Recent Orders</h3>
+    ${state.orders.map(o=>`
+    <div style="padding:8px 0;border-bottom:1px solid rgba(33,38,45,0.5)">
+      <div style="display:flex;justify-content:space-between;margin-bottom:2px">
+        <span style="font-size:0.8rem;color:#C9D1D9">${o.id} · Room ${o.room}</span>
+        <span class="badge ${o.status==='delivered'?'badge-green':o.status==='preparing'?'badge-yellow':'badge-blue'}">${o.status}</span>
+      </div>
+      <p style="font-size:0.72rem;color:#8B949E">${o.items.substring(0,40)}…</p>
+    </div>`).join('')}
+  </div>
+</div>`;}
+
+function pageAdminRooms(){return `
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+  <div><h2 style="font-family:'Playfair Display',serif;font-size:1.6rem;color:#C9D1D9;font-style:italic">Room Management</h2></div>
+  <button class="btn btn-gold" onclick="openAddRoomModal()">+ Add Room</button>
+</div>
+<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+  ${[['All',''],['Available','available'],['Occupied','occupied'],['Cleaning','cleaning'],['Maintenance','maintenance']].map(([l,v])=>`
+  <button class="btn btn-ghost btn-sm" onclick="filterRooms('${v}')">${l}</button>`).join('')}
+</div>
+<table class="tbl card p-0" id="roomsTable">
+  <thead><tr><th>Room</th><th>Type</th><th>Floor</th><th>Price</th><th>Capacity</th><th>Status</th><th>Guest</th><th>Actions</th></tr></thead>
+  <tbody>
+  ${state.rooms.map(r=>`
+  <tr>
+    <td style="color:#D4A853;font-weight:600">${r.id}</td>
+    <td>${r.type}</td>
+    <td>${r.floor}</td>
+    <td style="color:#D4A853">$${r.price}/night</td>
+    <td>${r.capacity} guests</td>
+    <td><span class="badge ${r.status==='available'?'badge-green':r.status==='occupied'?'badge-red':r.status==='cleaning'?'badge-yellow':'badge-gray'}" style="cursor:pointer" onclick="toggleRoomStatus('${r.id}')" title="Click to toggle status">${r.status}</span></td>
+    <td>${r.guest||'—'}</td>
+    <td style="display:flex;gap:6px">
+      <button class="btn btn-ghost btn-sm" onclick="toggleRoomStatus('${r.id}')" title="Toggle Status">✏️</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteRoom(${r._db_id}, '${r.id}')" title="Remove Room">🗑</button>
+    </td>
+  </tr>`).join('')}
+  </tbody>
+</table>`;}
+
+function pageAdminStaff(){return `
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+  <div><h2 style="font-family:'Playfair Display',serif;font-size:1.6rem;color:#C9D1D9;font-style:italic">Staff Management</h2></div>
+  <button class="btn btn-gold" onclick="openAddStaffModal()">+ Add Staff</button>
+</div>
+<table class="tbl card p-0" style="margin-bottom:20px">
+  <thead><tr><th>ID</th><th>Name</th><th>Role</th><th>Zone</th><th>Schedule</th><th>Tasks</th><th>Status</th><th>Actions</th></tr></thead>
+  <tbody>
+  ${state.staff.map(s=>`
+  <tr>
+    <td style="color:#D4A853">${s.id}</td>
+    <td style="display:flex;align-items:center;gap:8px"><div style="width:28px;height:28px;border-radius:50%;background:#21262D;display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:#D4A853;flex-shrink:0">${s.name[0]}</div>${s.name}</td>
+    <td>${s.role}</td>
+    <td>${s.zone}</td>
+    <td>${s.schedule}</td>
+    <td><span class="badge badge-blue">${getStaffActiveTasksCount(s._db_id)} active</span></td>
+    <td><span class="badge ${s.status==='on-duty'?'badge-green':'badge-gray'}" style="cursor:pointer" onclick="toggleStaffDuty(${s._db_id}, '${s.status}')" title="Click to toggle status">${s.status}</span></td>
+    <td style="display:flex;gap:6px">
+      <button class="btn btn-ghost btn-sm" onclick="openEditStaffModal(${s._db_id}, '${s.name.replace(/'/g, "\\'")}', '${s.role}', '${s.zone}', '${s.status}', '${s.schedule}')" title="Edit Role, Zone & Schedule">✏️</button>
+      <button class="btn btn-danger btn-sm" onclick="deactivateStaff(${s._db_id}, '${s.name}')" title="Remove Staff">🗑</button>
+    </td>
+  </tr>`).join('')}
+  </tbody>
+</table>`;}
+
+function pageAdminBookings(){return `
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+  <div><h2 style="font-family:'Playfair Display',serif;font-size:1.6rem;color:#C9D1D9;font-style:italic">All Bookings</h2><p style="color:#8B949E;font-size:0.82rem">${state.bookings.length} total bookings</p></div>
+  <div style="display:flex;gap:8px">
+    <div class="search-bar"><span style="color:#8B949E">🔍</span><input placeholder="Search…"/></div>
+    <select class="inp" style="width:auto;padding:7px 10px"><option>All Status</option><option>Confirmed</option><option>Approved</option><option>Pending</option><option>Cancelled</option></select>
+  </div>
+</div>
+<div class="card p-0">
+  <table class="tbl">
+    <thead><tr><th>ID</th><th>Guest</th><th>Room</th><th>Check-In</th><th>Check-Out</th><th>Nights</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>
+    ${state.bookings.map(b=>`
+    <tr>
+      <td style="color:#D4A853">${b.id}</td>
+      <td>${b.guest}</td>
+      <td>Room ${b.room} — ${b.type}</td>
+      <td>${b.checkin}</td>
+      <td>${b.checkout}</td>
+      <td>${b.nights}</td>
+      <td style="color:#D4A853;font-weight:600">$${b.total}</td>
+      <td><span class="badge ${getBookingStatusBadgeClass(b.status)}">${b.status}</span></td>
+      <td style="display:flex;gap:4px;align-items:center">
+        ${b.status==='approved'?`<button class="btn btn-success btn-sm" style="padding:4px 8px" onclick="staffUpdateBookingStatus(${b._db_id}, 'confirmed')" title="Confirm Booking">Confirm</button><button class="btn btn-danger btn-sm" style="padding:4px 8px" onclick="staffUpdateBookingStatus(${b._db_id}, 'cancelled')" title="Cancel Booking">✕</button>`: b.status==='pending'?`<span style="color:#8B949E;font-size:0.75rem;margin-right:4px">Waiting for Staff</span>`:''}
+        <button class="btn btn-ghost btn-sm" onclick="downloadBookingInvoicePDF(${b._db_id})" title="Download Invoice PDF">📄</button>
+      </td>
+    </tr>`).join('')}
+    </tbody>
+  </table>
+</div>`;}
+
+function pageAdminReports(){return `
+<div id="reportsContainer" style="padding: 5px;">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+  <div><h2 style="font-family:'Playfair Display',serif;font-size:1.6rem;color:#C9D1D9;font-style:italic">Reports</h2></div>
+  <div style="display:flex;gap:8px" class="no-print">
+    <select class="inp" style="width:auto;padding:7px 10px"><option>March 2026</option><option>February 2026</option><option>January 2026</option></select>
+    <button class="btn btn-gold" onclick="downloadReportsPDF()">📥 Export PDF</button>
+  </div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">
+  <div class="stat-card"><div class="stat-num" style="color:#D4A853">$14,280</div><div class="stat-label">Total Revenue</div><div class="stat-trend trend-up">↑ 12%</div></div>
+  <div class="stat-card"><div class="stat-num">62%</div><div class="stat-label">Occupancy Rate</div><div class="stat-trend trend-up">↑ 8%</div></div>
+  <div class="stat-card"><div class="stat-num" style="color:#3FB950">$342</div><div class="stat-label">Avg Booking Value</div><div class="stat-trend trend-up">↑ 5%</div></div>
+  <div class="stat-card"><div class="stat-num" style="color:#58A6FF">4.7</div><div class="stat-label">Guest Rating</div><div class="stat-trend trend-up">↑ 0.2</div></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+  <div class="card p-5">
+    <h3 style="font-size:0.88rem;color:#C9D1D9;margin-bottom:14px">💰 Revenue Breakdown</h3>
+    ${[['Room Revenue','$11,820','83%'],['Room Service','$1,460','10%'],['Spa & Services','$640','4%'],['Other','$360','3%']].map(([c,v,p])=>`
+    <div style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:0.78rem;color:#C9D1D9">${c}</span><span style="font-size:0.78rem;color:#D4A853">${v} <span style="color:#8B949E">(${p})</span></span></div>
+      <div class="progress-wrap"><div class="progress-bar" style="width:${p}"></div></div>
+    </div>`).join('')}
+  </div>
+  <div class="card p-5">
+    <h3 style="font-size:0.88rem;color:#C9D1D9;margin-bottom:14px">📅 Booking Summary</h3>
+    ${[['Total Bookings','18'],['Confirmed','14'],['Pending','2'],['Cancelled','2'],['Avg Nights Stay','4.2'],['Total Room Nights','75']].map(([k,v])=>`
+    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(33,38,45,0.6)"><span style="font-size:0.78rem;color:#8B949E">${k}</span><span style="font-size:0.82rem;color:#C9D1D9;font-weight:600">${v}</span></div>`).join('')}
+  </div>
+</div>
+<div class="card p-5">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <h3 style="font-size:0.88rem;color:#C9D1D9">📋 Booking History</h3>
+    <button class="btn btn-ghost btn-sm no-print" onclick="downloadBookingsCSV()">⬇ Export CSV</button>
+  </div>
+  <table class="tbl">
+    <thead><tr><th>ID</th><th>Guest</th><th>Room</th><th>Dates</th><th>Total</th><th>Status</th></tr></thead>
+    <tbody>
+    ${state.bookings.map(b=>`
+    <tr>
+      <td style="color:#D4A853">${b.id}</td><td>${b.guest}</td>
+      <td>Room ${b.room} — ${b.type}</td>
+      <td style="font-size:0.75rem;color:#8B949E">${b.checkin} → ${b.checkout} (${b.nights}n)</td>
+      <td style="color:#D4A853;font-weight:600">$${b.total}</td>
+      <td><span class="badge ${getBookingStatusBadgeClass(b.status)}">${b.status}</span></td>
+    </tr>`).join('')}
+    </tbody>
+  </table>
+</div>
+</div>`;}
+
+function pageAdminTasks(){return `
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+  <div><h2 style="font-family:'Playfair Display',serif;font-size:1.6rem;color:#C9D1D9;font-style:italic">Task Scheduler</h2></div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+  <div>
+    <div class="card p-5" style="margin-bottom:14px">
+      <h3 style="font-size:0.88rem;color:#C9D1D9;margin-bottom:16px">🗓️ Create New Task</h3>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div><label style="font-size:0.72rem;color:#8B949E;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.06em">Task Type</label>
+          <select class="inp" id="taskType"><option>Room Cleaning</option><option>Room Service Delivery</option><option>Maintenance Check</option><option>Linen Change</option><option>Mini-Bar Restock</option><option>Guest Check-In Prep</option></select></div>
+        <div><label style="font-size:0.72rem;color:#8B949E;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.06em">Assign To</label>
+          <select class="inp" id="taskAssignTo">${state.staff.map(s=>`<option value="${s._db_id}">${s.name} (${s.role})</option>`).join('')}</select></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div><label style="font-size:0.72rem;color:#8B949E;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.06em">Room</label>
+            <select class="inp" id="taskRoom">${state.rooms.map(r=>`<option value="${r.id}">${r.id}</option>`).join('')}</select></div>
+          <div><label style="font-size:0.72rem;color:#8B949E;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.06em">Priority</label>
+            <select class="inp" id="taskPriority"><option>Normal</option><option>High</option><option>Urgent</option></select></div>
+        </div>
+        <div><label style="font-size:0.72rem;color:#8B949E;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.06em">Scheduled Time</label>
+          <input type="datetime-local" class="inp" id="taskDueDate"/></div>
+        <div><label style="font-size:0.72rem;color:#8B949E;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.06em">Notes</label>
+          <textarea class="inp" rows="2" placeholder="Additional instructions…" id="taskNotes"></textarea></div>
+        <button class="btn btn-gold" onclick="confirmAssignTask()">Assign Task</button>
+      </div>
+    </div>
+  </div>
+  <div>
+    <div class="card p-5">
+      <h3 style="font-size:0.88rem;color:#C9D1D9;margin-bottom:14px">📋 Staff Schedule Today</h3>
+      ${state.staff.map(s=>`
+      <div style="padding:10px;background:#21262D;border-radius:6px;margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <span style="font-size:0.82rem;color:#C9D1D9;font-weight:500">${s.name}</span>
+          <span class="badge ${s.status==='on-duty'?'badge-green':'badge-gray'}">${s.status}</span>
+        </div>
+        <p style="font-size:0.72rem;color:#8B949E">${s.role} · ${s.zone} · ${s.schedule}</p>
+        <p style="font-size:0.72rem;color:#D4A853;margin-top:2px">${getStaffActiveTasksCount(s._db_id || 0)} active tasks</p>
+      </div>`).join('')}
+    </div>
+  </div>
+</div>`;}
+
+// ═══════════════════════════════════════════════════
+// INTERACTIVE FUNCTIONS
+// ═══════════════════════════════════════════════════
+let cart=[];
+function addToCart(name,price){
+  const ex=cart.find(i=>i.name===name);
+  if(ex)ex.qty++;else cart.push({name,price,qty:1});
+  renderCart();
+  toast(`${name} added to order`,'gold');
+}
+function renderCart(){
+  const el=document.getElementById('cartItems');
+  if(!el)return;
+  const empty=document.getElementById('emptyCartMsg');
+  if(cart.length===0){if(el)el.innerHTML='<p id="emptyCartMsg" style="color:#8B949E;font-size:0.78rem;text-align:center;padding:20px 0">Cart is empty</p>';updateCartTotals(0);return;}
+  let sub=0;
+  el.innerHTML=cart.map(i=>{sub+=i.price*i.qty;return`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:0.78rem"><span style="color:#C9D1D9;flex:1">${i.name} ×${i.qty}</span><div style="display:flex;align-items:center;gap:6px"><span style="color:#D4A853">$${(i.price*i.qty).toFixed(2)}</span><button onclick="removeFromCart('${i.name}')" style="background:none;border:none;color:#8B949E;cursor:pointer;font-size:0.8rem">✕</button></div></div>`;}).join('');
+  updateCartTotals(sub);
+}
+function updateCartTotals(sub){
+  const svc=sub*0.1;const tot=sub+svc;
+  const s=document.getElementById('cartSub');const sv=document.getElementById('cartSvc');const t=document.getElementById('cartTot');
+  if(s)s.textContent='$'+sub.toFixed(2);if(sv)sv.textContent='$'+svc.toFixed(2);if(t)t.textContent='$'+tot.toFixed(2);
+}
+function removeFromCart(name){cart=cart.filter(i=>i.name!==name);renderCart();}
+function clearCart(){cart=[];renderCart();}
+async function placeOrder(){
+  if(cart.length===0){toast('Add items to your order first','red');return;}
+  
+  const guestName = (isLoggedIn && loggedInUser) ? loggedInUser.name : 'Alice Johnson';
+  const guestBooking = state.bookings.find(b => b.guest === guestName && b.status === 'confirmed');
+  if (!guestBooking) {
+    toast('No active confirmed booking found to place order.','red');
+    return;
+  }
+  
+  const bookingDbId = guestBooking._db_id;
+  const notes = document.getElementById('orderNotes')?.value || '';
+  
+  toast('Placing order…', 'gold');
+  try {
+    const fd = new FormData();
+    fd.append('action', 'place');
+    fd.append('booking_id', bookingDbId);
+    fd.append('items', JSON.stringify(cart));
+    fd.append('notes', notes);
+    
+    const res = await fetch('room_service.php', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.success) {
+      toast('Order placed successfully! Ref: ' + data.order_ref, 'green');
+      clearCart();
+      loadOrdersFromDB();
+    } else {
+      toast(data.message || 'Order failed to place.', 'red');
+    }
+  } catch(e) {
+    toast('Server error. Order not placed.', 'red');
+  }
+}
+
+async function submitCleaningRequest() {
+  const guestName = (isLoggedIn && loggedInUser) ? loggedInUser.name : 'Alice Johnson';
+  const guestBooking = state.bookings.find(b => b.guest === guestName && b.status === 'confirmed');
+  if (!guestBooking) {
+    toast('No active confirmed booking found to request cleaning.', 'red');
+    return;
+  }
+  
+  const roomDbId = guestBooking.room_id;
+  const type = document.getElementById('cleaningType')?.value || '';
+  const time = document.getElementById('cleaningTime')?.value || '';
+  const additionalNotes = document.getElementById('cleaningNotes')?.value || '';
+  const notes = `${type} | Preferred: ${time} | Notes: ${additionalNotes}`;
+  
+  const rawPriority = document.getElementById('cleaningPriority')?.value || 'Normal';
+  const priority = rawPriority.includes('High') ? 'high' : 'normal';
+  
+  toast('Submitting cleaning request…', 'gold');
+  try {
+    const fd = new FormData();
+    fd.append('action', 'request');
+    fd.append('room_id', roomDbId);
+    fd.append('priority', priority);
+    fd.append('notes', notes);
+    
+    const res = await fetch('cleaning.php', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.success) {
+      toast('Cleaning request submitted! Ref: ' + data.request_ref, 'green');
+      loadCleaningsFromDB();
+      loadRoomsFromDB();
+    } else {
+      toast(data.message || 'Failed to submit cleaning request.', 'red');
+    }
+  } catch(e) {
+    toast('Server error. Cleaning request not submitted.', 'red');
+  }
+}
+
+async function sendChat(){
+  const inp=document.getElementById('chatInput');
+  if(!inp||!inp.value.trim())return;
+  const messageText = inp.value.trim();
+  inp.value='';
+  
+  try {
+    const fd = new FormData();
+    fd.append('action', 'send_message');
+    fd.append('message', messageText);
+    const res = await fetch('chat_api.php', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.success) {
+      await loadChatFromDB();
+      const area = document.getElementById('chatArea');
+      if (area) {
+        area.scrollTop = area.scrollHeight;
+      }
+    } else {
+      toast('Failed to send message.', 'red');
+    }
+  } catch(e) {
+    toast('Server error. Message not sent.', 'red');
+  }
+}
+
+async function downloadBookingInvoicePDF(bookingId) {
+  const b = state.bookings.find(x => String(x._db_id) === String(bookingId) || String(x.id).toLowerCase() === String(bookingId).toLowerCase());
+  if (!b) {
+    toast("Booking not found.", "red");
+    return;
+  }
+  
+  toast("Generating invoice PDF...", "gold");
+  
+  // Format info
+  const invoiceRef = 'INV-' + String(b._db_id).padStart(4, '0');
+  const checkInDate = b.checkin;
+  const checkOutDate = b.checkout;
+  const nights = b.nights;
+  const rate = b.nights > 0 ? (b.total / b.nights) : b.total;
+  const roomTotal = b.total;
+  
+  const orders = state.orders.filter(o => o.guest === b.guest || String(o.room) === String(b.room));
+  const ordersTotal = orders.reduce((sum, o) => sum + o.total, 0);
+  const subtotal = roomTotal + ordersTotal;
+  const tax = Number((roomTotal * 0.15).toFixed(2));
+  const grandTotal = subtotal + tax;
+  
+  const isPaid = ['confirmed', 'checked_in', 'checked_out'].includes(b.status);
+
+  // Build temporary card element
+  const tempDiv = document.createElement('div');
+  tempDiv.style.position = 'absolute';
+  tempDiv.style.left = '0';
+  tempDiv.style.top = '250%'; // Positioned safely below the fold so it's fully rendered by layout engine
+  tempDiv.style.width = '800px';
+  tempDiv.style.boxSizing = 'border-box';
+  
+  tempDiv.innerHTML = `
+    <div style="background: #ffffff; color: #1a1a1a; padding: 40px; font-family: 'Outfit', sans-serif; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid #e5e7eb; border-radius: 8px;">
+      <div>
+        <!-- Top Gold Bar -->
+        <div style="height: 6px; background: linear-gradient(to right, #D4A853, #A07830); margin-bottom: 30px; border-radius: 3px;"></div>
+        
+        <!-- Invoice Header -->
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 40px;">
+          <div>
+            <h1 style="font-family: 'Playfair Display', serif; font-size: 2.2rem; color: #0d1117; margin: 0; font-weight: 600; letter-spacing: -0.02em;">AURELIA <span style="color: #D4A853;">GRAND</span></h1>
+            <p style="font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: #8B949E; margin: 4px 0 0 0; font-weight: 600;">Hotel &amp; Suites · Dhaka's Finest Est. 1924</p>
+            <p style="font-size: 0.8rem; color: #4b5563; margin: 15px 0 0 0; line-height: 1.5;">
+              1 Gulshan Avenue, Gulshan-1, Dhaka 1212<br>
+              Phone: +880 2 8888 0000 | Email: billing@aureliagrand.com<br>
+              VAT Reg No: BIN-123456789-001
+            </p>
+          </div>
+          <div style="text-align: right;">
+            <h2 style="font-family: 'Playfair Display', serif; font-size: 1.8rem; color: #D4A853; margin: 0; font-style: italic; font-weight: 500;">INVOICE</h2>
+            <div style="margin-top: 10px; display: inline-block; padding: 4px 14px; border-radius: 99px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; ${isPaid ? 'background:#e6f4ea; color:#137333; border:1px solid #c2e7c9;' : 'background:#fef7e0; color:#b06000; border:1px solid #ffeab4;' }">
+              ${isPaid ? 'PAID' : 'UNPAID'}
+            </div>
+            <p style="font-size: 0.85rem; color: #0d1117; font-weight: 600; margin: 15px 0 0 0;">Invoice Ref: <span style="font-family: monospace; color: #4b5563;">${invoiceRef}</span></p>
+            <p style="font-size: 0.8rem; color: #4b5563; margin: 4px 0 0 0;">Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+          </div>
+        </div>
+
+        <!-- Client & Stay Information -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; border-top: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; padding: 25px 0; margin-bottom: 45px;">
+          <div>
+            <p style="font-size: 0.75rem; color: #8B949E; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; font-weight: 600;">Bill To</p>
+            <h3 style="font-size: 1.1rem; color: #0d1117; margin: 0 0 4px 0; font-weight: 700;">${b.guest}</h3>
+            <p style="font-size: 0.85rem; color: #4b5563; margin: 0;">Email: ${b.email}</p>
+            <p style="font-size: 0.85rem; color: #4b5563; margin: 4px 0 0 0;">Booking Ref: <span style="font-family: monospace; font-weight: 600;">${b.id}</span></p>
+          </div>
+          <div>
+            <p style="font-size: 0.75rem; color: #8B949E; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; font-weight: 600;">Stay Details</p>
+            <p style="font-size: 0.85rem; color: #0d1117; margin: 0; font-weight: 600;">Room: <span style="color: #4b5563; font-weight: normal;">Room ${b.room} (${b.type})</span></p>
+            <p style="font-size: 0.85rem; color: #0d1117; margin: 4px 0 0 0; font-weight: 600;">Check-In: <span style="color: #4b5563; font-weight: normal;">${checkInDate}</span></p>
+            <p style="font-size: 0.85rem; color: #0d1117; margin: 4px 0 0 0; font-weight: 600;">Check-Out: <span style="color: #4b5563; font-weight: normal;">${checkOutDate}</span></p>
+            <p style="font-size: 0.85rem; color: #0d1117; margin: 4px 0 0 0; font-weight: 600;">Nights: <span style="color: #4b5563; font-weight: normal;">${nights} nights</span></p>
+          </div>
+        </div>
+
+        <!-- Charges Table -->
+        <h3 style="font-size: 0.85rem; color: #0d1117; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 15px; font-weight: 600;">Itemized Charges</h3>
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-bottom: 40px;">
+          <thead>
+            <tr style="border-bottom: 2px solid #D4A853; background-color: #f9fafb;">
+              <th style="text-align: left; padding: 12px 14px; color: #374151; font-weight: 600;">Description</th>
+              <th style="text-align: center; padding: 12px 14px; color: #374151; font-weight: 600; width: 80px;">Qty</th>
+              <th style="text-align: right; padding: 12px 14px; color: #374151; font-weight: 600; width: 120px;">Rate</th>
+              <th style="text-align: right; padding: 12px 14px; color: #374151; font-weight: 600; width: 140px;">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom: 1px solid #e5e7eb;">
+              <td style="padding: 14px 14px; color: #1a1a1a; font-weight: 500;">Accommodation: ${b.type} Room (Room ${b.room})</td>
+              <td style="padding: 14px 14px; color: #4b5563; text-align: center;">${nights}</td>
+              <td style="padding: 14px 14px; color: #4b5563; text-align: right;">$${rate.toFixed(2)}</td>
+              <td style="padding: 14px 14px; color: #1a1a1a; text-align: right; font-weight: 600;">$${roomTotal.toFixed(2)}</td>
+            </tr>
+            ${orders.map(o => `
+            <tr style="border-bottom: 1px solid #e5e7eb;">
+              <td style="padding: 14px 14px; color: #1a1a1a;">Room Service: ${o.items}</td>
+              <td style="padding: 14px 14px; color: #4b5563; text-align: center;">1</td>
+              <td style="padding: 14px 14px; color: #4b5563; text-align: right;">$${o.total.toFixed(2)}</td>
+              <td style="padding: 14px 14px; color: #1a1a1a; text-align: right; font-weight: 600;">$${o.total.toFixed(2)}</td>
+            </tr>
+            `).join('')}
+          </tbody>
+        </table>
+
+        <!-- Totals Breakdown -->
+        <div style="display: flex; justify-content: space-between; align-items: start; margin-top: 30px;">
+          <div style="max-width: 380px; font-size: 0.78rem; color: #6b7280; line-height: 1.6;">
+            <p style="font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #374151; margin-bottom: 6px; margin-top: 0;">Payment &amp; Terms</p>
+            <p style="margin: 0;">This is an official invoice generated by Aurelia Grand Hotel Management System. No signature is required. All charges are itemized in USD.</p>
+          </div>
+          <div style="width: 300px; border-radius: 6px; background-color: #f9fafb; padding: 18px; border: 1px solid #e5e7eb;">
+            <div style="display: flex; justify-content: space-between; padding: 5px 0; font-size: 0.82rem;"><span style="color: #4b5563;">Subtotal</span><span style="color: #1a1a1a; font-weight: 600;">$${subtotal.toFixed(2)}</span></div>
+            <div style="display: flex; justify-content: space-between; padding: 5px 0; font-size: 0.82rem;"><span style="color: #4b5563;">VAT / City Tax (15% on Room)</span><span style="color: #1a1a1a; font-weight: 600;">$${tax.toFixed(2)}</span></div>
+            <div style="display: flex; justify-content: space-between; padding: 10px 0 0 0; border-top: 1px solid #e5e7eb; margin-top: 8px; align-items: center;"><span style="color: #0d1117; font-weight: 700; font-size: 0.88rem; text-transform: uppercase;">Total Due</span><span style="font-family: 'Playfair Display', serif; font-size: 1.5rem; color: #A07830; font-weight: 700;">$${grandTotal.toFixed(2)}</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 80px; text-align: center; font-size: 0.78rem; color: #8b949e;">
+        <p style="font-family: 'Playfair Display', serif; font-size: 1rem; font-style: italic; color: #D4A853; margin: 0 0 4px 0;">Thank you for staying at Aurelia Grand</p>
+        <p style="margin: 0;">We hope your stay was delightful and look forward to welcoming you back soon.</p>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(tempDiv);
+  
+  const opt = {
+    margin:       10,
+    filename:     `invoice_${invoiceRef}.pdf`,
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { scale: 2.5, useCORS: true, backgroundColor: '#ffffff' },
+    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+  
+  html2pdf().set(opt).from(tempDiv).save().then(() => {
+    document.body.removeChild(tempDiv);
+    toast('Invoice downloaded successfully!', 'green');
+  }).catch(err => {
+    document.body.removeChild(tempDiv);
+    console.error('PDF error:', err);
+    toast('Failed to download PDF.', 'red');
+  });
+}
+
+async function downloadReportsPDF() {
+  const element = document.getElementById('reportsContainer');
+  if (!element) {
+    toast('Reports container not found', 'red');
+    return;
+  }
+  
+  toast('Generating PDF report...', 'gold');
+  
+  // Temporarily hide buttons to clean up PDF
+  const noPrint = element.querySelectorAll('.no-print');
+  noPrint.forEach(el => el.style.display = 'none');
+  
+  const opt = {
+    margin:       10,
+    filename:     `Aurelia_Grand_Report_${new Date().toISOString().slice(0,10)}.pdf`,
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#0d1117' },
+    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+  
+  html2pdf().set(opt).from(element).save().then(() => {
+    noPrint.forEach(el => el.style.display = 'inline-flex');
+    toast('PDF Report downloaded successfully!', 'green');
+  }).catch(err => {
+    noPrint.forEach(el => el.style.display = 'inline-flex');
+    console.error('PDF error:', err);
+    toast('Failed to download PDF.', 'red');
+  });
+}
+
+function downloadBookingsCSV() {
+  if (!state.bookings || state.bookings.length === 0) {
+    toast('No booking history to export.', 'red');
+    return;
+  }
+  
+  const headers = ['Booking Ref', 'Guest Name', 'Room', 'Room Type', 'Check-in', 'Check-out', 'Nights', 'Total Amount', 'Status'];
+  const rows = state.bookings.map(b => [
+    b.id,
+    b.guest,
+    `Room ${b.room}`,
+    b.type,
+    b.checkin,
+    b.checkout,
+    b.nights,
+    `$${b.total.toFixed(2)}`,
+    b.status.toUpperCase()
+  ]);
+  
+  const csvContent = [
+    headers.map(val => `"${String(val).replace(/"/g, '""')}"`).join(','),
+    ...rows.map(row => row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(','))
+  ].join('\n');
+  
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", `Aurelia_Grand_Bookings_${new Date().toISOString().slice(0,10)}.csv`);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  toast('CSV exported and downloading!', 'green');
+}
+
+async function downloadInvoicePDF(invoiceRef) {
+  const element = document.getElementById('invoiceCard');
+  if (!element) {
+    toast('Invoice card not found', 'red');
+    return;
+  }
+  
+  toast('Generating PDF...', 'gold');
+  
+  const proceed = () => {
+    const opt = {
+      margin:       10,
+      filename:     `invoice_${invoiceRef}.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#161B22' },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    
+    const noPrintElements = element.querySelectorAll('.no-print');
+    noPrintElements.forEach(el => el.style.display = 'none');
+    
+    html2pdf().set(opt).from(element).save().then(() => {
+      noPrintElements.forEach(el => el.style.display = 'flex');
+      toast('Invoice downloaded successfully!', 'green');
+    }).catch(err => {
+      noPrintElements.forEach(el => el.style.display = 'flex');
+      console.error('PDF error:', err);
+      toast('Failed to download PDF.', 'red');
+    });
+  };
+
+  if (typeof html2pdf === 'undefined') {
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+    script.onload = proceed;
+    script.onerror = () => toast('Failed to load PDF library. Check your connection.', 'red');
+    document.head.appendChild(script);
+  } else {
+    proceed();
+  }
+}
+
+async function startStaffTask(id) {
+  toast('Starting task…', 'gold');
+  try {
+    const fd = new FormData();
+    fd.append('action', 'update_status');
+    fd.append('id', id);
+    fd.append('status', 'in-progress');
+    
+    const res = await fetch('admin/tasks.php', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.success) {
+      toast('Task started', 'gold');
+      await loadTasksFromDB();
+    } else {
+      toast('Failed to update task status.', 'red');
+    }
+  } catch(e) {
+    toast('Server error.', 'red');
+  }
+}
+
+async function completeStaffTask(id) {
+  toast('Completing task…', 'gold');
+  try {
+    const fd = new FormData();
+    fd.append('action', 'update_status');
+    fd.append('id', id);
+    fd.append('status', 'done');
+    
+    const res = await fetch('admin/tasks.php', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.success) {
+      toast('Task marked complete!', 'green');
+      await loadTasksFromDB();
+    } else {
+      toast('Failed to update task status.', 'red');
+    }
+  } catch(e) {
+    toast('Server error.', 'red');
+  }
+}
+
+function getBookingStatusBadgeClass(status) {
+  switch (status) {
+    case 'confirmed': return 'badge-green';
+    case 'approved': return 'badge-blue';
+    case 'pending': return 'badge-yellow';
+    case 'checked_in': return 'badge-green';
+    case 'checked_out': return 'badge-gray';
+    case 'cancelled': return 'badge-red';
+    default: return 'badge-gray';
+  }
+}
+
+async function staffUpdateBookingStatus(bookingId, status) {
+  toast('Updating booking status…', 'gold');
+  try {
+    const fd = new FormData();
+    fd.append('booking_id', bookingId);
+    fd.append('status', status);
+    
+    const res = await fetch('update_booking_status.php', { method: 'POST', body: fd });
+    const data = await res.json();
+    
+    if (data.success) {
+      let msg = 'Booking status updated.';
+      let color = 'green';
+      if (status === 'approved') { msg = 'Booking approved by staff!'; color = 'green'; }
+      else if (status === 'confirmed') { msg = 'Booking confirmed by admin!'; color = 'green'; }
+      else if (status === 'cancelled') { msg = 'Booking cancelled.'; color = 'red'; }
+      toast(msg, color);
+      await loadBookingsFromDB();
+      await loadRoomsFromDB();
+    } else {
+      toast(data.message || 'Failed to update status.', 'red');
+    }
+  } catch(e) {
+    toast('Server error. Status not updated.', 'red');
+  }
+}
+
+async function staffUpdateOrderStatus(orderId, status) {
+  const toastMsg = status === 'preparing' ? 'Order Confirmed!' : 'Order marked as delivered!';
+  const toastColor = 'green';
+  toast('Updating order status…', 'gold');
+  try {
+    const fd = new FormData();
+    fd.append('action', 'update_status');
+    fd.append('order_id', orderId);
+    fd.append('status', status);
+    
+    const res = await fetch('room_service.php', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.success) {
+      toast(toastMsg, toastColor);
+      await loadOrdersFromDB();
+    } else {
+      toast(data.message || 'Failed to update order status.', 'red');
+    }
+  } catch(e) {
+    toast('Server error. Order not updated.', 'red');
+  }
+}
+
+async function staffUpdateCleaningStatus(requestId, status) {
+  toast('Updating cleaning request…', 'gold');
+  try {
+    const fd = new FormData();
+    fd.append('action', 'update');
+    fd.append('id', requestId);
+    fd.append('status', status);
+    
+    const res = await fetch('cleaning.php', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.success) {
+      const msg = status === 'in-progress' ? 'Cleaning assigned and started!' : 'Cleaning completed!';
+      toast(msg, 'green');
+      await loadCleaningsFromDB();
+      await loadRoomsFromDB();
+    } else {
+      toast(data.message || 'Failed to update cleaning request.', 'red');
+    }
+  } catch(e) {
+    toast('Server error. Cleaning status not updated.', 'red');
+  }
+}
+
+async function toggleRoomStatus(id){
+  const r=state.rooms.find(x=>x.id===id);if(!r)return;
+  const cycle=['available','cleaning','maintenance','occupied'];
+  const nextStatus=cycle[(cycle.indexOf(r.status)+1)%cycle.length];
+  toast(`Updating room ${id} status...`,'gold');
+  try {
+    const fd = new FormData();
+    fd.append('action', 'update');
+    fd.append('id', r._db_id);
+    fd.append('status', nextStatus);
+    
+    const res = await fetch('admin/rooms_api.php', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.success) {
+      toast(`Room ${id} → ${nextStatus}`, 'green');
+      await loadRoomsFromDB();
+    } else {
+      toast(data.message || 'Failed to update status.', 'red');
+    }
+  } catch(e) {
+    toast('Server error. Status not updated.', 'red');
+  }
+}
+
+function openBookingModal(roomId,type,price){
+  // Require login to book
+  if(!isLoggedIn){
+    // Store pending booking intent
+    window._pendingBooking={roomId,type,price};
+    // Show auth overlay with a friendly message
+    const overlay=document.getElementById('authOverlay');
+    overlay.classList.remove('hidden');
+    authSwitchTab('login');
+    document.getElementById('authBrandTagline').textContent='Sign In to Book';
+    document.getElementById('authTopBarMsg').textContent='Please sign in to complete your booking';
+    toast('Please sign in or create an account to book a room.','gold');
+    return;
+  }
+  document.getElementById('modalContent').innerHTML=`
+  <div style="padding:24px">
+    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:20px">
+      <div><p style="font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;color:#D4A853;margin-bottom:4px">Book Room</p><h3 style="font-family:'Playfair Display',serif;font-size:1.4rem;color:#C9D1D9;font-style:italic">Room ${roomId} — ${type}</h3></div>
+      <button onclick="closeModal()" style="background:none;border:none;color:#8B949E;cursor:pointer;font-size:1.3rem">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div><label style="font-size:0.7rem;color:#8B949E;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.06em">Check-In</label><input type="date" class="inp" id="bkIn"/></div>
+        <div><label style="font-size:0.7rem;color:#8B949E;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.06em">Check-Out</label><input type="date" class="inp" id="bkOut"/></div>
+      </div>
+      <div><label style="font-size:0.7rem;color:#8B949E;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.06em">Guests</label><select class="inp"><option>1 Adult</option><option>2 Adults</option><option>2 Adults + 1 Child</option></select></div>
+      <div><label style="font-size:0.7rem;color:#8B949E;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.06em">Full Name</label><input class="inp" placeholder="Your full name"/></div>
+      <div><label style="font-size:0.7rem;color:#8B949E;display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.06em">Email</label><input class="inp" type="email" placeholder="your@email.com"/></div>
+      <div style="background:#21262D;border-radius:6px;padding:12px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:0.8rem;color:#8B949E">Rate per night</span>
+        <span style="font-family:'Playfair Display',serif;font-size:1.3rem;color:#D4A853">$${price}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <button class="btn btn-gold" onclick="confirmBooking('${roomId}','${type}',${price})">Confirm Booking</button>
+        <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('modal').classList.add('open');
+}
+
+async function confirmBooking(id, type, price) {
+  const checkIn  = document.getElementById("bkIn")?.value;
+  const checkOut = document.getElementById("bkOut")?.value;
+  if (!checkIn || !checkOut) { toast("Please select check-in and check-out dates.", "red"); return; }
+  const room = state.rooms.find(r => r.id === id);
+  const room_db_id = room?._db_id || id;
+  closeModal();
+  toast("Processing booking…", "gold");
+  try {
+    const fd = new FormData();
+    fd.append("room_id", room_db_id);
+    fd.append("check_in", checkIn);
+    fd.append("check_out", checkOut);
+    fd.append("guests_count", 1);
+    const res  = await fetch("process_booking.php", { method: "POST", body: fd });
+    const data = await res.json();
+    if (data.success) {
+      toast("Room " + id + " booked! Ref: " + data.booking_ref + ". Total: $" + data.total, "green");
+      loadRoomsFromDB();
+      loadBookingsFromDB();
+    } else { toast(data.message || "Booking failed.", "red"); }
+  } catch(e) { toast("Server error. Please try again.", "red"); }
+}
+
+async function loadRoomsFromDB() {
+  try {
+    const res  = await fetch("get_rooms.php");
+    const data = await res.json();
+    if (data.success) {
+      const currentJSON = JSON.stringify(data.data);
+      if (currentJSON === lastRoomsJSON) return;
+      lastRoomsJSON = currentJSON;
+      state.rooms = data.data.map(r => ({
+        id: r.room_number, _db_id: r.id, type: r.type, floor: parseInt(r.floor),
+        status: r.status, price: parseFloat(r.price), capacity: r.capacity,
+        amenities: r.amenities_array || [], guest: null,
+        img: r.image_url || "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=300&q=70"
+      }));
+      if (currentPage) navigate(currentPage);
+    }
+  } catch(e) { /* fallback to static state */ }
+}
+
+async function loadBookingsFromDB() {
+  try {
+    const res = await fetch("get_bookings.php");
+    const data = await res.json();
+    if (data.success) {
+      state.bookings = data.data.map(b => ({
+        id: b.booking_ref,
+        _db_id: b.id,
+        user_id: b.user_id,
+        room_id: b.room_id,
+        guest: (b.first_name && b.last_name) ? (b.first_name + ' ' + b.last_name) : (loggedInUser ? loggedInUser.name : 'Guest'),
+        room: b.room_number,
+        type: b.room_type,
+        checkin: b.check_in,
+        checkout: b.check_out,
+        nights: parseInt(b.nights),
+        guests_count: parseInt(b.guests_count),
+        status: b.status,
+        total: parseFloat(b.total_amount),
+        special_requests: b.special_requests,
+        email: b.user_email || 'guest@example.com'
+      }));
+      if (currentPage) navigate(currentPage);
+    }
+  } catch(e) {}
+}
+
+async function loadOrdersFromDB() {
+  try {
+    const fd = new FormData();
+    fd.append('action', 'get');
+    const res = await fetch('room_service.php', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.success) {
+      state.orders = data.data.map(o => ({
+        id: o.order_ref,
+        _db_id: o.id,
+        guest: (o.first_name && o.last_name) ? (o.first_name + ' ' + o.last_name) : (loggedInUser ? loggedInUser.name : 'Guest'),
+        room: o.room_number,
+        items: o.items_array ? o.items_array.map(i => `${i.name} × ${i.qty}`).join(', ') : '',
+        total: parseFloat(o.total),
+        status: o.status,
+        assigned_to: o.assigned_to,
+        time: new Date(o.ordered_at).toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit' })
+      }));
+      if (currentPage) navigate(currentPage);
+    }
+  } catch(e) {}
+}
+
+async function loadCleaningsFromDB() {
+  try {
+    const res = await fetch('cleaning.php?action=get');
+    const data = await res.json();
+    if (data.success) {
+      state.cleaningRequests = data.data.map(c => ({
+        id: c.request_ref,
+        _db_id: c.id,
+        room: c.room_number,
+        requestedBy: (c.req_first && c.req_last) ? (c.req_first + ' ' + c.req_last) : (loggedInUser ? loggedInUser.name : 'Guest'),
+        priority: c.priority,
+        status: c.status,
+        assignedTo: (c.asgn_first && c.asgn_last) ? (c.asgn_first + ' ' + c.asgn_last) : (c.assigned_to || 'Unassigned'),
+        assigned_to: c.assigned_to,
+        time: new Date(c.requested_at).toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit' })
+      }));
+      if (currentPage) navigate(currentPage);
+    }
+  } catch(e) {}
+}
+
+function getStaffActiveTasksCount(staffDbId) {
+  let count = 0;
+  if (state.cleaningRequests) {
+    count += state.cleaningRequests.filter(c => 
+      parseInt(c.assigned_to) === parseInt(staffDbId) && 
+      c.status !== 'done' && 
+      c.status !== 'cancelled'
+    ).length;
+  }
+  if (state.orders) {
+    count += state.orders.filter(o => 
+      parseInt(o.assigned_to) === parseInt(staffDbId) && 
+      o.status !== 'delivered' && 
+      o.status !== 'cancelled'
+    ).length;
+  }
+  if (state.adminTasks) {
+    count += state.adminTasks.filter(t => 
+      parseInt(t.assigned_to) === parseInt(staffDbId) && 
+      t.status !== 'done' && 
+      t.status !== 'cancelled'
+    ).length;
+  }
+  return count;
+}
+
+async function loadStaffFromDB() {
+  try {
+    const res = await fetch("admin/staff.php?action=get");
+    const data = await res.json();
+    if (data.success) {
+      state.staff = data.data.map(s => ({
+        id: 'S' + String(s.id).padStart(2, '0'),
+        _db_id: s.id,
+        name: s.first_name + ' ' + s.last_name,
+        role: s.department || 'Staff',
+        zone: s.zone || 'All Floors',
+        schedule: (s.shift_start && s.shift_end) ? `${s.shift_start.slice(0,5)}–${s.shift_end.slice(0,5)}` : '08:00–16:00',
+        status: s.on_duty == 1 ? 'on-duty' : 'off-duty',
+        tasks: getStaffActiveTasksCount(s.id)
+      }));
+      if (currentPage) navigate(currentPage);
+    }
+  } catch(e) {}
+}
+
+function loadAllDataFromDB() {
+  loadRoomsFromDB();
+  if (isLoggedIn) {
+    loadBookingsFromDB();
+    loadOrdersFromDB();
+    loadCleaningsFromDB();
+    if (loggedInUser && (loggedInUser.role === 'admin' || loggedInUser.role === 'staff')) {
+      loadStaffFromDB();
+      loadTasksFromDB();
+    }
+  }
+}
+
+function openAddRoomModal(){
+  document.getElementById('modalContent').innerHTML=`
+  <div style="padding:24px">
+    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:20px">
+      <h3 style="font-family:'Playfair Display',serif;font-size:1.3rem;color:#C9D1D9;font-style:italic">Add New Room</h3>
+      <button onclick="closeModal()" style="background:none;border:none;color:#8B949E;cursor:pointer;font-size:1.3rem">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div><label style="font-size:0.7rem;color:#8B949E;display:block;margin-bottom:4px">Room Number</label><input class="inp" id="newRoomNumber" placeholder="e.g. 601"/></div>
+        <div><label style="font-size:0.7rem;color:#8B949E;display:block;margin-bottom:4px">Floor</label><input class="inp" id="newRoomFloor" placeholder="e.g. 6" type="number"/></div>
+      </div>
+      <div><label style="font-size:0.7rem;color:#8B949E;display:block;margin-bottom:4px">Room Type</label><select class="inp" id="newRoomType"><option>Deluxe</option><option>Superior</option><option>Junior Suite</option><option>Grand Suite</option><option>Presidential</option></select></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div><label style="font-size:0.7rem;color:#8B949E;display:block;margin-bottom:4px">Price/Night ($)</label><input class="inp" id="newRoomPrice" type="number" placeholder="e.g. 250"/></div>
+        <div><label style="font-size:0.7rem;color:#8B949E;display:block;margin-bottom:4px">Capacity</label><select class="inp" id="newRoomCapacity"><option>1</option><option>2</option><option>3</option><option>4</option></select></div>
+      </div>
+      <div><label style="font-size:0.7rem;color:#8B949E;display:block;margin-bottom:4px">Amenities</label><input class="inp" id="newRoomAmenities" placeholder="WiFi, TV, AC, Minibar (comma separated)"/></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">
+        <button class="btn btn-gold" onclick="confirmAddRoom()">Add Room</button>
+        <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('modal').classList.add('open');
+}
+
+async function confirmAddRoom() {
+  const roomNumber = document.getElementById('newRoomNumber')?.value.trim();
+  const floor = document.getElementById('newRoomFloor')?.value;
+  const type = document.getElementById('newRoomType')?.value;
+  const price = document.getElementById('newRoomPrice')?.value;
+  const capacity = document.getElementById('newRoomCapacity')?.value;
+  const amenities = document.getElementById('newRoomAmenities')?.value.trim();
+  
+  if (!roomNumber || !floor || !price) {
+    toast('Room Number, Floor, and Price/Night are required.', 'red');
+    return;
+  }
+  
+  toast('Adding room...', 'gold');
+  try {
+    const fd = new FormData();
+    fd.append('action', 'add');
+    fd.append('room_number', roomNumber);
+    fd.append('floor', floor);
+    fd.append('type', type);
+    fd.append('price', price);
+    fd.append('capacity', capacity);
+    fd.append('amenities', amenities);
+    
+    const res = await fetch('admin/rooms_api.php', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.success) {
+      toast('Room added successfully!', 'green');
+      closeModal();
+      lastRoomsJSON = ""; // Force list update
+      await loadRoomsFromDB();
+    } else {
+      toast(data.message || 'Failed to add room.', 'red');
+    }
+  } catch(e) {
+    toast('Server error. Failed to add room.', 'red');
+  }
+}
+
+async function deleteRoom(id, roomNumber) {
+  if (!confirm(`Are you sure you want to remove Room ${roomNumber}?`)) return;
+  toast(`Removing room ${roomNumber}...`, 'gold');
+  try {
+    const fd = new FormData();
+    fd.append('action', 'delete');
+    fd.append('id', id);
+    
+    const res = await fetch('admin/rooms_api.php', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.success) {
+      toast(`Room ${roomNumber} removed successfully.`, 'green');
+      lastRoomsJSON = ""; // Force list update
+      await loadRoomsFromDB();
+    } else {
+      toast(data.message || 'Failed to remove room.', 'red');
+    }
+  } catch(e) {
+    toast('Server error. Failed to remove room.', 'red');
+  }
+}
+
+function openAddStaffModal(){
+  document.getElementById('modalContent').innerHTML=`
+  <div style="padding:24px">
+    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:20px">
+      <h3 style="font-family:'Playfair Display',serif;font-size:1.3rem;color:#C9D1D9;font-style:italic">Add Staff Member</h3>
+      <button onclick="closeModal()" style="background:none;border:none;color:#8B949E;cursor:pointer;font-size:1.3rem">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div><label style="font-size:0.7rem;color:#8B949E;display:block;margin-bottom:4px">First Name</label><input class="inp" id="newStaffFname" placeholder="First name"/></div>
+        <div><label style="font-size:0.7rem;color:#8B949E;display:block;margin-bottom:4px">Last Name</label><input class="inp" id="newStaffLname" placeholder="Last name"/></div>
+      </div>
+      <div><label style="font-size:0.7rem;color:#8B949E;display:block;margin-bottom:4px">Role</label><select class="inp" id="newStaffRole"><option>Housekeeper</option><option>Room Service</option><option>Receptionist</option><option>Maintenance</option><option>Chef</option><option>Concierge</option></select></div>
+      <div><label style="font-size:0.7rem;color:#8B949E;display:block;margin-bottom:4px">Assigned Zone</label><select class="inp" id="newStaffZone"><option>Floor 1-2</option><option>Floor 3-5</option><option>All Floors</option><option>Lobby</option><option>Kitchen</option></select></div>
+      <div><label style="font-size:0.7rem;color:#8B949E;display:block;margin-bottom:4px">Shift</label><select class="inp" id="newStaffShift"><option value="07:00-15:00">Morning: 07:00–15:00</option><option value="12:00-20:00">Afternoon: 12:00–20:00</option><option value="15:00-23:00">Evening: 15:00–23:00</option><option value="23:00-07:00">Night: 23:00–07:00</option></select></div>
+      <div><label style="font-size:0.7rem;color:#8B949E;display:block;margin-bottom:4px">Email</label><input class="inp" type="email" id="newStaffEmail" placeholder="staff@aureliagrand.com"/></div>
+      <div>
+        <label style="font-size:0.7rem;color:#8B949E;display:block;margin-bottom:4px">Password</label>
+        <div style="position:relative">
+          <input class="inp" type="password" id="newStaffPassword" value="Staff@1234" placeholder="Enter password" style="padding-right:36px"/>
+          <button type="button" class="auth-eye-btn" onclick="authToggleEye('newStaffPassword',this)">👁</button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">
+        <button class="btn btn-gold" onclick="confirmAddStaff()">Add Staff</button>
+        <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('modal').classList.add('open');
+}
+
+async function confirmAddStaff() {
+  const fname = document.getElementById('newStaffFname')?.value.trim();
+  const lname = document.getElementById('newStaffLname')?.value.trim();
+  const role = document.getElementById('newStaffRole')?.value;
+  const zone = document.getElementById('newStaffZone')?.value;
+  const shiftVal = document.getElementById('newStaffShift')?.value;
+  const email = document.getElementById('newStaffEmail')?.value.trim();
+  const password = document.getElementById('newStaffPassword')?.value || 'Staff@1234';
+  
+  if (!fname || !lname || !email) {
+    toast('First Name, Last Name, and Email are required.', 'red');
+    return;
+  }
+  
+  const [ss, se] = shiftVal.split('-');
+  
+  toast('Adding staff member...', 'gold');
+  try {
+    const fd = new FormData();
+    fd.append('action', 'add');
+    fd.append('first_name', fname);
+    fd.append('last_name', lname);
+    fd.append('email', email);
+    fd.append('password', password);
+    fd.append('department', role);
+    fd.append('zone', zone);
+    fd.append('shift_start', ss);
+    fd.append('shift_end', se);
+    
+    const res = await fetch('admin/staff.php', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.success) {
+      toast('Staff member added successfully!', 'green');
+      closeModal();
+      await loadStaffFromDB();
+    } else {
+      toast(data.message || 'Failed to add staff member.', 'red');
+    }
+  } catch(e) {
+    toast('Server error. Failed to add staff.', 'red');
+  }
+}
+
+function openEditStaffModal(userId, name, currentDept, currentZone, currentStatus, currentSchedule){
+  const sched = (currentSchedule || '08:00–16:00').replace('–', '-');
+  document.getElementById('modalContent').innerHTML=`
+  <div style="padding:24px">
+    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:20px">
+      <h3 style="font-family:'Playfair Display',serif;font-size:1.3rem;color:#C9D1D9;font-style:italic">Edit Staff: ${name}</h3>
+      <button onclick="closeModal()" style="background:none;border:none;color:#8B949E;cursor:pointer;font-size:1.3rem">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div>
+        <label style="font-size:0.7rem;color:#8B949E;display:block;margin-bottom:4px">Role/Department</label>
+        <select class="inp" id="editStaffRole">
+          ${['Housekeeper','Room Service','Receptionist','Maintenance','Chef','Concierge'].map(d=>`
+            <option value="${d}" ${d===currentDept?'selected':''}>${d}</option>
+          `).join('')}
+        </select>
+      </div>
+      <div>
+        <label style="font-size:0.7rem;color:#8B949E;display:block;margin-bottom:4px">Assigned Zone</label>
+        <select class="inp" id="editStaffZone">
+          ${['Floor 1-2','Floor 3-5','All Floors','Lobby','Kitchen'].map(z=>`
+            <option value="${z}" ${z===currentZone?'selected':''}>${z}</option>
+          `).join('')}
+        </select>
+      </div>
+      <div>
+        <label style="font-size:0.7rem;color:#8B949E;display:block;margin-bottom:4px">Shift/Schedule</label>
+        <select class="inp" id="editStaffShift">
+          <option value="07:00-15:00" ${sched==='07:00-15:00'?'selected':''}>Morning: 07:00–15:00</option>
+          <option value="12:00-20:00" ${sched==='12:00-20:00'?'selected':''}>Afternoon: 12:00–20:00</option>
+          <option value="15:00-23:00" ${sched==='15:00-23:00'?'selected':''}>Evening: 15:00–23:00</option>
+          <option value="23:00-07:00" ${sched==='23:00-07:00'?'selected':''}>Night: 23:00–07:00</option>
+          ${sched !== '07:00-15:00' && sched !== '12:00-20:00' && sched !== '15:00-23:00' && sched !== '23:00-07:00' ? `<option value="${sched}" selected>Current: ${currentSchedule}</option>` : ''}
+        </select>
+      </div>
+      <div>
+        <label style="font-size:0.7rem;color:#8B949E;display:block;margin-bottom:4px">Duty Status</label>
+        <select class="inp" id="editStaffStatus">
+          <option value="on-duty" ${currentStatus==='on-duty'?'selected':''}>ON-DUTY</option>
+          <option value="off-duty" ${currentStatus==='off-duty'?'selected':''}>OFF-DUTY</option>
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+        <button class="btn btn-gold" onclick="confirmEditStaff(${userId}, '${currentStatus}')">Save Changes</button>
+        <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('modal').classList.add('open');
+}
+
+async function confirmEditStaff(userId, originalStatus) {
+  const role = document.getElementById('editStaffRole')?.value;
+  const zone = document.getElementById('editStaffZone')?.value;
+  const status = document.getElementById('editStaffStatus')?.value;
+  const shiftVal = document.getElementById('editStaffShift')?.value || '08:00-16:00';
+  const [ss, se] = shiftVal.split('-');
+  
+  toast('Updating staff profile...', 'gold');
+  try {
+    const fd = new FormData();
+    fd.append('action', 'update');
+    fd.append('user_id', userId);
+    fd.append('department', role);
+    fd.append('zone', zone);
+    fd.append('shift_start', ss);
+    fd.append('shift_end', se);
+    
+    const res = await fetch('admin/staff.php', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.success) {
+      if (status !== originalStatus) {
+        const nextOnDuty = status === 'on-duty' ? 1 : 0;
+        const fd2 = new FormData();
+        fd2.append('action', 'toggle_duty');
+        fd2.append('user_id', userId);
+        fd2.append('on_duty', nextOnDuty);
+        await fetch('admin/staff.php', { method: 'POST', body: fd2 });
+      }
+      
+      toast('Staff profile updated successfully!', 'green');
+      closeModal();
+      await loadStaffFromDB();
+    } else {
+      toast(data.message || 'Failed to update staff.', 'red');
+    }
+  } catch(e) {
+    toast('Server error. Failed to update staff.', 'red');
+  }
+}
+
+async function toggleStaffDuty(userId, currentStatus) {
+  const nextOnDuty = currentStatus === 'on-duty' ? 0 : 1;
+  toast('Updating staff status...', 'gold');
+  try {
+    const fd = new FormData();
+    fd.append('action', 'toggle_duty');
+    fd.append('user_id', userId);
+    fd.append('on_duty', nextOnDuty);
+    
+    const res = await fetch('admin/staff.php', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.success) {
+      toast('Staff duty status updated!', 'green');
+      await loadStaffFromDB();
+    } else {
+      toast(data.message || 'Failed to update staff status.', 'red');
+    }
+  } catch(e) {
+    toast('Server error. Status not updated.', 'red');
+  }
+}
+
+async function deactivateStaff(userId, name) {
+  if (!confirm(`Are you sure you want to deactivate and remove staff member ${name}?`)) return;
+  toast('Deactivating staff member...', 'gold');
+  try {
+    const fd = new FormData();
+    fd.append('action', 'deactivate');
+    fd.append('user_id', userId);
+    
+    const res = await fetch('admin/staff.php', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.success) {
+      toast('Staff member deactivated successfully.', 'green');
+      await loadStaffFromDB();
+    } else {
+      toast(data.message || 'Failed to deactivate staff.', 'red');
+    }
+  } catch(e) {
+    toast('Server error. Failed to deactivate staff.', 'red');
+  }
+}
+
+async function confirmAssignTask() {
+  const type = document.getElementById('taskType')?.value;
+  const staffId = document.getElementById('taskAssignTo')?.value;
+  const room = document.getElementById('taskRoom')?.value;
+  const priorityVal = document.getElementById('taskPriority')?.value;
+  const dueDateVal = document.getElementById('taskDueDate')?.value;
+  const notes = document.getElementById('taskNotes')?.value.trim();
+  
+  if (!staffId) {
+    toast('Please select a staff member.', 'red');
+    return;
+  }
+  
+  let priority = 'medium';
+  if (priorityVal === 'High') priority = 'high';
+  else if (priorityVal === 'Urgent') priority = 'urgent';
+  
+  const title = `${type} — Room ${room}`;
+  const description = notes || `Perform ${type} for Room ${room}`;
+  const dueDate = dueDateVal ? dueDateVal.split('T')[0] : null;
+  
+  toast('Assigning task...', 'gold');
+  try {
+    const fd = new FormData();
+    fd.append('action', 'add');
+    fd.append('title', title);
+    fd.append('description', description);
+    fd.append('assigned_to', staffId);
+    fd.append('priority', priority);
+    if (dueDate) {
+      fd.append('due_date', dueDate);
+    }
+    
+    const res = await fetch('admin/tasks.php', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.success) {
+      toast('Task assigned successfully!', 'green');
+      
+      const typeEl = document.getElementById('taskType');
+      if (typeEl) typeEl.selectedIndex = 0;
+      const assignEl = document.getElementById('taskAssignTo');
+      if (assignEl) assignEl.selectedIndex = 0;
+      const roomEl = document.getElementById('taskRoom');
+      if (roomEl) roomEl.selectedIndex = 0;
+      const priorityEl = document.getElementById('taskPriority');
+      if (priorityEl) priorityEl.selectedIndex = 0;
+      const dueEl = document.getElementById('taskDueDate');
+      if (dueEl) dueEl.value = '';
+      const notesEl = document.getElementById('taskNotes');
+      if (notesEl) notesEl.value = '';
+      
+      await loadTasksFromDB();
+      await loadStaffFromDB();
+    } else {
+      toast(data.message || 'Failed to assign task.', 'red');
+    }
+  } catch(e) {
+    toast('Server error. Task not assigned.', 'red');
+  }
+}
+
+async function loadTasksFromDB() {
+  try {
+    const res = await fetch("admin/tasks.php?action=get");
+    const data = await res.json();
+    if (data.success) {
+      if (loggedInUser && loggedInUser.role === 'admin') {
+        state.adminTasks = data.data;
+      } else if (loggedInUser && loggedInUser.role === 'staff') {
+        state.staffTasks = data.data.map(t => {
+          let room = "—";
+          let notes = t.description || "";
+          
+          const roomMatch = notes.match(/Room\s*(\d+)/i) || t.title.match(/Room\s*(\d+)/i);
+          if (roomMatch) {
+            room = roomMatch[1];
+          } else {
+            const numMatch = notes.match(/\b\d{3}\b/);
+            if (numMatch) room = numMatch[0];
+          }
+          
+          let priority = "Normal";
+          if (t.priority === 'high' || t.priority === 'urgent') {
+            priority = "High";
+          }
+          
+          let status = "Pending";
+          if (t.status === 'in-progress') status = "In Progress";
+          else if (t.status === 'done') status = "Done";
+          else if (t.status === 'cancelled') status = "Cancelled";
+          
+          let time = t.due_date ? t.due_date : "Today";
+          
+          return {
+            id: t.id,
+            time: time,
+            task: t.title,
+            room: room,
+            priority: priority,
+            status: status,
+            notes: notes
+          };
+        });
+      }
+      if (currentPage) navigate(currentPage);
+    }
+  } catch(e) {}
+}
+
+async function submitContactMessage() {
+  const name = document.getElementById('contactName')?.value.trim();
+  const email = document.getElementById('contactEmail')?.value.trim();
+  const subject = document.getElementById('contactSubject')?.value.trim();
+  const messageContent = document.getElementById('contactMessage')?.value.trim();
+  
+  if (!name || !email || !subject || !messageContent) {
+    toast('Please fill in all fields.', 'red');
+    return;
+  }
+  
+  if (!/^[^@]+@[^@]+\.[^@]+$/.test(email)) {
+    toast('Please enter a valid email address.', 'red');
+    return;
+  }
+  
+  const message = `Subject: ${subject}\n\n${messageContent}`;
+  
+  toast('Sending message…', 'gold');
+  try {
+    const fd = new FormData();
+    fd.append('action', 'send_message');
+    fd.append('name', name);
+    fd.append('email', email);
+    fd.append('message', message);
+    
+    const res = await fetch('chat_api.php', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.success) {
+      toast('Message sent! We will respond within 2 hours.', 'green');
+      
+      const nameEl = document.getElementById('contactName');
+      if (nameEl) nameEl.value = '';
+      const emailEl = document.getElementById('contactEmail');
+      if (emailEl) emailEl.value = '';
+      const subjectEl = document.getElementById('contactSubject');
+      if (subjectEl) subjectEl.value = '';
+      const messageEl = document.getElementById('contactMessage');
+      if (messageEl) messageEl.value = '';
+    } else {
+      toast('Failed to send message.', 'red');
+    }
+  } catch(e) {
+    toast('Server error. Message not sent.', 'red');
+  }
+}
+
+
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+
+// ═══════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════
+function toast(msg,type='gold'){
+  const wrap=document.getElementById('toastWrap');
+  const t=document.createElement('div');
+  const icons={gold:'✨',green:'✅',red:'❌'};
+  t.className=`toast toast-${type}`;
+  t.innerHTML=`<span style="font-size:1rem">${icons[type]||'ℹ️'}</span>${msg}`;
+  wrap.appendChild(t);
+  setTimeout(()=>{t.style.animation='none';t.style.opacity='0';t.style.transform='translateX(100%)';t.style.transition='all 0.3s';setTimeout(()=>t.remove(),300);},3000);
+}
+
+// ═══════════════════════════════════════════════════
+// START
+// ═══════════════════════════════════════════════════
+init();
+</script>
+</body>
+</html>
